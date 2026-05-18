@@ -358,7 +358,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
   Future<bool> _verifyPharmacistAccess(String token) async {
     try {
       final response = await http.get(
-        Uri.parse('$baseUrl/api/auth/me'),
+        Uri.parse('$baseUrl/api/pharmacist/status'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -370,15 +370,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       }
 
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final role = data['role']?.toString().toLowerCase().trim();
-      final pharmacistStatus = data['pharmacistStatus']
-          ?.toString()
-          .toLowerCase()
-          .trim();
-
-      return data['isPharmacist'] == true ||
-          role == 'pharmacist' ||
-          pharmacistStatus == 'approved';
+      return data['canUsePharmacistTools'] == true;
     } catch (e) {
       debugPrint('Pharmacist access verification failed: $e');
       return false;

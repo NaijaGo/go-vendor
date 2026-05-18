@@ -78,11 +78,13 @@ class VendorOrder {
       items: (json['items'] as List? ?? [])
           .map((itemJson) => VendorOrderItem.fromJson(itemJson))
           .toList(),
-      pickupCode: (json['pickupOTP'] ?? mainOrder['pickupOTP'] ?? '').toString(),
+      pickupCode: (json['pickupOTP'] ?? mainOrder['pickupOTP'] ?? '')
+          .toString(),
       vendorPayout: subtotal - platformFee,
       platformFee: platformFee,
       deliveryFee: double.tryParse('${json['shippingPrice'] ?? 0}') ?? 0.0,
-      riderPayout: double.tryParse(
+      riderPayout:
+          double.tryParse(
             '${mainOrder['riderPayoutAmount'] ?? riderBreakdown['amount'] ?? 0}',
           ) ??
           0.0,
@@ -450,14 +452,22 @@ class _OrdersRecivedScreenState extends State<OrdersRecivedScreen> {
             OutlinedButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                await _rejectOrderWithReason(order);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _rejectOrderWithReason(order);
+                  }
+                });
               },
               child: const Text('Reject'),
             ),
             FilledButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                await _acceptOrder(order);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    _acceptOrder(order);
+                  }
+                });
               },
               child: const Text('Accept'),
             ),
@@ -667,6 +677,7 @@ class _OrdersRecivedScreenState extends State<OrdersRecivedScreen> {
                     itemBuilder: (context, index) {
                       final order = _displayedOrders[index];
                       return _OrderTile(
+                        key: ValueKey('${order.id}-${order.orderStatus}'),
                         order: order,
                         onUpdateStatus: _updateOrderStatus,
                         onAccept: _acceptOrder,
@@ -883,6 +894,7 @@ class _OrderTile extends StatelessWidget {
   final Future<void> Function(VendorOrder order) onReject;
 
   const _OrderTile({
+    super.key,
     required this.order,
     required this.onUpdateStatus,
     required this.onAccept,
@@ -1391,15 +1403,17 @@ class _ActionsMenu extends StatelessWidget {
         ),
       ),
       onSelected: (value) {
-        if (value == 'accept') {
-          onAccept(order);
-          return;
-        }
-        if (value == 'reject') {
-          onReject(order);
-          return;
-        }
-        onUpdateStatus(order, value);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (value == 'accept') {
+            onAccept(order);
+            return;
+          }
+          if (value == 'reject') {
+            onReject(order);
+            return;
+          }
+          onUpdateStatus(order, value);
+        });
       },
       itemBuilder: (context) => menuItems
           .map(

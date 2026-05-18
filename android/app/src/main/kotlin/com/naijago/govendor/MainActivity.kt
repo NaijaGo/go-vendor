@@ -1,4 +1,4 @@
-package com.example.naijagovendorsapp
+package com.naijago.govendor
 
 import android.app.Notification
 import android.app.NotificationChannel
