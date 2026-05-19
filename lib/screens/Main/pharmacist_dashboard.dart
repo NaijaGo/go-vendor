@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -40,6 +41,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
   bool _isConnecting = true;
   bool _hasPharmacistAccess = false;
   bool _isUpdatingAvailability = false;
+  final Set<String> _claimingSessionIds = {};
 
   @override
   void initState() {
@@ -93,8 +95,9 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         _isOnline = prefs.getBool(_pharmacistOnlinePreferenceKey) ?? false;
       });
     }
-    await _loadQueueFromRest(token);
-    await _loadOnlinePharmacists(token);
+    unawaited(
+      Future.wait([_loadQueueFromRest(token), _loadOnlinePharmacists(token)]),
+    );
 
     _socket?.dispose();
     _socket = io.io(
@@ -115,8 +118,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         _isConnecting = false;
       });
       _emitAvailability(_isOnline);
-      _loadQueueFromRest(token);
-      _loadOnlinePharmacists(token);
+      Future.wait([_loadQueueFromRest(token), _loadOnlinePharmacists(token)]);
     });
 
     _socket!.on('incoming_chat_request', (data) {
@@ -402,56 +404,18 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       return;
     }
 
-    if (!_isOnline || _socket == null) {
-      await _claimSessionViaRest(sessionId);
+    if (_claimingSessionIds.contains(sessionId)) {
       return;
     }
 
-    _socket!.emitWithAck(
-      'pharmacist_claim_session',
-      {'sessionId': sessionId},
-      ack: (response) {
-        final data = _ackPayload(response);
-
-        if (data['success'] == true) {
-          if (!mounted) return;
-          setState(() {
-            _incomingRequests.removeWhere(
-              (req) => req['sessionId'] == sessionId,
-            );
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Consultation claimed successfully.')),
-          );
-
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) =>
-                  ChatScreen(sessionId: sessionId, isPharmacistView: true),
-            ),
-          );
-        } else {
-          final message =
-              (data['message'] ??
-                      'This consultation may already be assigned to another pharmacist.')
-                  .toString();
-
-          _showNotification('Claim failed', message, isError: true);
-
-          if (message.contains('already claimed') && mounted) {
-            setState(() {
-              _incomingRequests.removeWhere(
-                (req) => req['sessionId'] == sessionId,
-              );
-            });
-          }
-        }
-      },
-    );
+    await _claimSessionViaRest(sessionId);
   }
 
   Future<void> _claimSessionViaRest(String sessionId) async {
+    if (mounted) {
+      setState(() => _claimingSessionIds.add(sessionId));
+    }
+
     try {
       final token = await _getPharmacistAuthToken();
       if (token == null) {
@@ -478,19 +442,27 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Consultation claimed successfully.')),
         );
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) =>
-                ChatScreen(sessionId: sessionId, isPharmacistView: true),
-          ),
-        );
+        _openClaimedChat(sessionId);
         return;
       }
 
       throw Exception(data['message'] ?? 'Claim failed');
     } catch (e) {
       _showNotification('Claim failed', e.toString(), isError: true);
+    } finally {
+      if (mounted) {
+        setState(() => _claimingSessionIds.remove(sessionId));
+      }
     }
+  }
+
+  void _openClaimedChat(String sessionId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ChatScreen(sessionId: sessionId, isPharmacistView: true),
+      ),
+    );
   }
 
   void _showNotification(String title, String message, {bool isError = false}) {
@@ -879,6 +851,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         (request['textPreview'] as String?) ?? 'No preview available.';
     final createdAt = request['createdAt'] as DateTime? ?? DateTime.now();
     final sessionId = (request['sessionId'] as String?) ?? '';
+    final isClaiming = _claimingSessionIds.contains(sessionId);
 
     final shortUserId = userId.length > 8
         ? '${userId.substring(0, 8)}...'
@@ -980,9 +953,15 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: () => _claimSession(sessionId),
-                  icon: const Icon(Icons.medical_services_outlined),
-                  label: const Text('Claim'),
+                  onPressed: isClaiming ? null : () => _claimSession(sessionId),
+                  icon: isClaiming
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.medical_services_outlined),
+                  label: Text(isClaiming ? 'Opening...' : 'Claim'),
                 ),
               ),
             ],
