@@ -1528,7 +1528,7 @@ class _AccountScreenState extends State<AccountScreen>
       child: SwitchListTile.adaptive(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         value: value,
-        activeThumbColor: color.primary,
+        activeColor: color.primary,
         title: Text(
           title,
           style: TextStyle(

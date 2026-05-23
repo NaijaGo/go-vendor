@@ -612,7 +612,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
           // Size Type Selection
           DropdownButtonFormField<String>(
-            initialValue: _selectedSizeType,
+            value: _selectedSizeType,
             decoration: InputDecoration(
               labelText: 'Size Type',
               labelStyle: TextStyle(
@@ -1034,7 +1034,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                           const SizedBox(height: 10),
 
                           DropdownButtonFormField<String>(
-                            initialValue: size['unit'],
+                            value: size['unit'],
                             decoration: InputDecoration(
                               labelText: 'Unit',
                               border: OutlineInputBorder(
@@ -2653,7 +2653,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
                               // Category Dropdown
                               DropdownButtonFormField<String>(
-                                initialValue: _selectedCategory,
+                                value: _selectedCategory,
                                 decoration: _inputDecoration(
                                   'Select Category',
                                   color,

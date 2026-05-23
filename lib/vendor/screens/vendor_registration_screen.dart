@@ -1037,7 +1037,7 @@ b. Disputes shall be referred to a single arbitrator in accordance with the Arbi
           );
 
           final genderField = DropdownButtonFormField<String>(
-            initialValue: _selectedGender,
+            value: _selectedGender,
             decoration:
                 _inputDecoration(
                   label: 'Gender',
@@ -1423,7 +1423,7 @@ b. Disputes shall be referred to a single arbitrator in accordance with the Arbi
       child: Column(
         children: [
           DropdownButtonFormField<String>(
-            initialValue: _selectedIdType,
+            value: _selectedIdType,
             decoration: _inputDecoration(
               label: 'Valid means of identification',
               icon: Icons.badge_outlined,
@@ -1673,7 +1673,7 @@ b. Disputes shall be referred to a single arbitrator in accordance with the Arbi
             onChanged: (value) => setState(() => _deliveryAvailable = value),
             title: const Text('Delivery available'),
             contentPadding: EdgeInsets.zero,
-            activeThumbColor: AppTheme.primaryNavy,
+            activeColor: AppTheme.primaryNavy,
           ),
           if (_deliveryAvailable) ...[
             const SizedBox(height: 8),
