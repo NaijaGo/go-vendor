@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:ionicons/ionicons.dart';
 
 import '../../constants.dart';
 import '../../services/socket_service.dart';
@@ -307,23 +306,23 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
           ),
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.storefront_outline),
-              activeIcon: Icon(Ionicons.storefront),
+              icon: Icon(Icons.storefront_outlined),
+              activeIcon: Icon(Icons.storefront),
               label: 'Dashboard',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.cube_outline),
-              activeIcon: Icon(Ionicons.cube),
+              icon: Icon(Icons.inventory_2_outlined),
+              activeIcon: Icon(Icons.inventory_2),
               label: 'Products',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.receipt_outline),
-              activeIcon: Icon(Ionicons.receipt),
+              icon: Icon(Icons.receipt_long_outlined),
+              activeIcon: Icon(Icons.receipt_long),
               label: 'Orders',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.person_outline),
-              activeIcon: Icon(Ionicons.person),
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
               label: 'Account',
             ),
           ],
