@@ -45,5 +45,16 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Go-Vendors needs access to your photo library so you can select product images and upload them to your store.</string>
+	
+	<key>NSCameraUsageDescription</key>
+	<string>Go-Vendors needs access to your camera so you can take product photos and upload them to your store.</string>
+	
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Go-Vendors uses your location to help provide location-based vendor and delivery services while you are using the app.</string>
+	
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Go-Vendors uses your location to support vendor and delivery features that may require location access.</string>
 </dict>
 </plist>
