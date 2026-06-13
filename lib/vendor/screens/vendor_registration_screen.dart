@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -160,6 +161,8 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
   }
 
   Future<void> _getRealBusinessLocation() async {
+    if (_isLocating) return;
+
     setState(() {
       _isLocating = true;
       _errorMessage = null;
@@ -179,16 +182,15 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
 
       await LocationAccessService.requestPreciseLocationIfNeeded();
 
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: LocationAccessService.currentLocationSettings(),
-      );
+      final position = await _getCurrentBusinessPosition();
 
       final resolvedAddress =
           await AddressResolutionService.resolveFromCoordinates(
             position.latitude,
             position.longitude,
-          );
+          ).timeout(const Duration(seconds: 12));
 
+      if (!mounted) return;
       setState(() {
         _businessLocationLatitude = position.latitude;
         _businessLocationLongitude = position.longitude;
@@ -198,9 +200,12 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
       });
       _showSnack('Business location captured successfully.');
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to get location: $e';
-      });
+      if (mounted) {
+        setState(() {
+          _errorMessage =
+              'Failed to get location. On iPhone, allow Location while using the app and turn on Precise Location.';
+        });
+      }
       debugPrint('Location error: $e');
     } finally {
       if (mounted) {
@@ -209,6 +214,12 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
         });
       }
     }
+  }
+
+  Future<Position> _getCurrentBusinessPosition() {
+    return Geolocator.getCurrentPosition(
+      locationSettings: LocationAccessService.currentLocationSettings(),
+    ).timeout(const Duration(seconds: 18));
   }
 
   Future<void> _openLocationPicker() async {
@@ -422,16 +433,32 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
     required String purpose,
     required void Function(String url) onUploaded,
   }) async {
+    if (_isUploadingFile) return;
+
     final token = await _getAuthToken();
     if (token == null) return;
 
-    final image = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 82,
-      maxWidth: 1600,
-      maxHeight: 1600,
-    );
-    if (image == null) return;
+    XFile? image;
+    try {
+      image = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 82,
+        maxWidth: 1600,
+        maxHeight: 1600,
+      );
+    } on PlatformException catch (error) {
+      debugPrint('Image picker error: $error');
+      _showSnack(
+        'Photo access failed. On iPhone, allow Photos access for Go-Vendor in Settings.',
+      );
+      return;
+    }
+
+    if (image == null) {
+      _showSnack('No photo selected.');
+      return;
+    }
+    if (!mounted) return;
 
     setState(() => _isUploadingFile = true);
     try {
@@ -458,6 +485,7 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
           : <String, dynamic>{};
 
       if (response.statusCode == 200 && body['url'] != null) {
+        if (!mounted) return;
         setState(() => onUploaded(body['url'].toString()));
         _showSnack('Upload complete.');
       } else {

@@ -336,6 +336,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  font_awesome_flutter:
+    dependency: "direct main"
+    description:
+      name: font_awesome_flutter
+      sha256: b9011df3a1fa02993630b8fb83526368cf2206a711259830325bab2f1d2a4eb0
+      url: "https://pub.dev"
+    source: hosted
+    version: "10.12.0"
   geoclue:
     dependency: transitive
     description:
@@ -544,14 +552,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.18.1"
-  ionicons:
-    dependency: "direct main"
-    description:
-      name: ionicons
-      sha256: "5496bc65a16115ecf05b15b78f494ee4a8869504357668f0a11d689e970523cf"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.2.2"
   jni:
     dependency: transitive
     description:

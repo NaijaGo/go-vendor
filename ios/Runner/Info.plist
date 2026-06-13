@@ -24,6 +24,21 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Go-Vendor uses the camera so vendors can capture shop, product, ID, and certificate photos during onboarding.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Go-Vendor uses location access to verify your shop location for delivery and seller approval.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Location access helps Go-Vendor keep vendor location features compatible with iPhone permission handling.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>delivery_location</key>
+		<string>Go-Vendor temporarily requests precise location on iPhone to capture the correct shop address and coordinates.</string>
+	</dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Go-Vendor uses your current location to capture and verify your shop address during vendor registration.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Go-Vendor needs photo library access so vendors can upload shop, product, ID, and certificate photos during onboarding.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
