@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
+import '../../core/image_upload_mime.dart';
 import '../../services/address_resolution_service.dart';
 import '../../services/location_access_service.dart';
 import '../../theme/app_theme.dart';
@@ -216,10 +218,41 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
     }
   }
 
-  Future<Position> _getCurrentBusinessPosition() {
-    return Geolocator.getCurrentPosition(
-      locationSettings: LocationAccessService.currentLocationSettings(),
-    ).timeout(const Duration(seconds: 18));
+  Future<Position> _getCurrentBusinessPosition() async {
+    Object? lastError;
+    StackTrace? lastStackTrace;
+
+    for (var attempt = 0; attempt < 4; attempt++) {
+      try {
+        return await Geolocator.getCurrentPosition(
+          locationSettings: LocationAccessService.currentLocationSettings(),
+        ).timeout(const Duration(seconds: 18));
+      } catch (error, stackTrace) {
+        lastError = error;
+        lastStackTrace = stackTrace;
+        final shouldRetry =
+            _isPluginNotInitializedError(error) || error is TimeoutException;
+        if (!shouldRetry || attempt == 3) {
+          break;
+        }
+
+        await Future<void>.delayed(Duration(milliseconds: 500 + attempt * 300));
+      }
+    }
+
+    final lastKnownPosition = await Geolocator.getLastKnownPosition();
+    if (lastKnownPosition != null) {
+      return lastKnownPosition;
+    }
+
+    Error.throwWithStackTrace(lastError!, lastStackTrace!);
+  }
+
+  bool _isPluginNotInitializedError(Object error) {
+    final normalized = error.toString().toLowerCase();
+    return normalized.contains('notinitializederror') ||
+        normalized.contains('notlnitializederror') ||
+        normalized.contains('not initialized');
   }
 
   Future<void> _openLocationPicker() async {
@@ -474,7 +507,15 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
         http.MultipartFile.fromBytes(
           'file',
           await image.readAsBytes(),
-          filename: image.name.isNotEmpty ? image.name : '$purpose.jpg',
+          filename: imageUploadFilename(
+            fallback: purpose,
+            filename: image.name,
+            path: image.path,
+          ),
+          contentType: imageUploadContentType(
+            filename: image.name,
+            path: image.path,
+          ),
         ),
       );
 

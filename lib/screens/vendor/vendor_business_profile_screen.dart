@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
+import '../../core/image_upload_mime.dart';
 import '../../services/address_resolution_service.dart';
 import '../../services/location_access_service.dart';
 
@@ -219,7 +220,15 @@ class _VendorBusinessProfileScreenState
         http.MultipartFile.fromBytes(
           'image',
           bytes,
-          filename: image.name.isNotEmpty ? image.name : 'store-logo.jpg',
+          filename: imageUploadFilename(
+            fallback: 'store-logo',
+            filename: image.name,
+            path: image.path,
+          ),
+          contentType: imageUploadContentType(
+            filename: image.name,
+            path: image.path,
+          ),
         ),
       );
 
