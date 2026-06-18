@@ -186,26 +186,41 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
 
       final position = await _getCurrentBusinessPosition();
 
-      final resolvedAddress =
-          await AddressResolutionService.resolveFromCoordinates(
-            position.latitude,
-            position.longitude,
-          ).timeout(const Duration(seconds: 12));
+      ResolvedAddress? resolvedAddress;
+      try {
+        resolvedAddress = await AddressResolutionService.resolveFromCoordinates(
+          position.latitude,
+          position.longitude,
+        ).timeout(const Duration(seconds: 12));
+      } catch (error) {
+        debugPrint('Business reverse geocoding failed: $error');
+      }
 
       if (!mounted) return;
       setState(() {
         _businessLocationLatitude = position.latitude;
         _businessLocationLongitude = position.longitude;
-        _formattedAddressController.text = resolvedAddress.formattedAddress;
+        if (resolvedAddress != null) {
+          _formattedAddressController.text = resolvedAddress.formattedAddress;
+          if (resolvedAddress.city.isNotEmpty) {
+            _shopCityController.text = resolvedAddress.city;
+          }
+        } else if (_formattedAddressController.text.trim().isEmpty) {
+          _formattedAddressController.text =
+              'GPS coordinates captured. Please confirm the shop address manually.';
+        }
         _manualLatitudeController.text = position.latitude.toStringAsFixed(6);
         _manualLongitudeController.text = position.longitude.toStringAsFixed(6);
       });
-      _showSnack('Business location captured successfully.');
+      _showSnack(
+        resolvedAddress == null
+            ? 'GPS coordinates captured. Please confirm the address fields.'
+            : 'Business location captured successfully.',
+      );
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage =
-              'Failed to get location. On iPhone, allow Location while using the app and turn on Precise Location.';
+          _errorMessage = _businessLocationFailureMessage(e);
         });
       }
       debugPrint('Location error: $e');
@@ -253,6 +268,18 @@ class _VendorRegistrationScreenState extends State<VendorRegistrationScreen> {
     return normalized.contains('notinitializederror') ||
         normalized.contains('notlnitializederror') ||
         normalized.contains('not initialized');
+  }
+
+  String _businessLocationFailureMessage(Object error) {
+    if (_isPluginNotInitializedError(error)) {
+      return 'Location is still starting on this phone. Please wait a moment and try again.';
+    }
+
+    if (error is TimeoutException) {
+      return 'Current location took too long. Please check your signal and try again, or enter the shop coordinates manually.';
+    }
+
+    return 'Failed to get location. Please check location access, or enter the shop address and coordinates manually.';
   }
 
   Future<void> _openLocationPicker() async {
