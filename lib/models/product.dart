@@ -28,8 +28,12 @@ class Product {
   final bool isOverTheCounter;
   final List<String> imageUrls;
   final int salesCount;
+  final double averageRating;
+  final int numReviews;
   final bool isActive;
   final bool isFlashsale;
+  final bool hasOrders;
+  final bool ownershipLocked;
   final Map<String, dynamic>? sizeData; // NEW
   final List<String> availableSizes; // NEW
 
@@ -60,8 +64,12 @@ class Product {
     this.isOverTheCounter = false,
     this.imageUrls = const [],
     this.salesCount = 0,
+    this.averageRating = 0,
+    this.numReviews = 0,
     this.isActive = true,
     this.isFlashsale = false,
+    this.hasOrders = false,
+    this.ownershipLocked = false,
     this.sizeData, // NEW
     this.availableSizes = const [], // NEW
   });
@@ -227,8 +235,12 @@ class Product {
           json['isOverTheCounter'] == true || json['isOTC'] == true,
       imageUrls: parsedImageUrls,
       salesCount: json['salesCount'] ?? 0,
+      averageRating: _parseDouble(json['averageRating']) ?? 0,
+      numReviews: int.tryParse(json['numReviews']?.toString() ?? '') ?? 0,
       isActive: json['isActive'] ?? true,
       isFlashsale: json['is_flashsale'] ?? false,
+      hasOrders: json['hasOrders'] == true,
+      ownershipLocked: json['ownershipLocked'] == true,
       sizeData: parsedSizeData,
       availableSizes: parsedAvailableSizes,
     );
@@ -273,8 +285,12 @@ class Product {
     'isOverTheCounter': isOverTheCounter,
     'imageUrls': imageUrls,
     'salesCount': salesCount,
+    'averageRating': averageRating,
+    'numReviews': numReviews,
     'isActive': isActive,
     'is_flashsale': isFlashsale,
+    'hasOrders': hasOrders,
+    'ownershipLocked': ownershipLocked,
     'sizeData': sizeData,
   };
 
@@ -385,7 +401,9 @@ class Product {
 
     const averageCitySpeedKmPerHour = 24.0;
     final travelMinutes = (distance / averageCitySpeedKmPerHour * 60).ceil();
-    final minutes = isRestaurantItem ? travelMinutes + prepTimeMinutes : travelMinutes;
+    final minutes = isRestaurantItem
+        ? travelMinutes + prepTimeMinutes
+        : travelMinutes;
     return minutes < 1 ? 1 : minutes;
   }
 
@@ -430,7 +448,9 @@ class Product {
     if (!isRestaurantItem) return '';
     if (vendorTemporarilyClosed) {
       final reason = vendorClosureReason?.trim();
-      return reason == null || reason.isEmpty ? 'Closed today' : 'Closed: $reason';
+      return reason == null || reason.isEmpty
+          ? 'Closed today'
+          : 'Closed: $reason';
     }
     if (isWithinRestaurantOrderWindow) return 'Open now';
     return 'Opens at ${_formatTimeLabel(effectiveOpeningTime)}';

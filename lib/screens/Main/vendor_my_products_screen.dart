@@ -8,36 +8,9 @@ import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
+import '../../models/product.dart';
+import '../vendor/add_product_screen.dart';
 import '../../widgets/vendor_ui.dart';
-
-class Product {
-  final String id;
-  final String name;
-  final String category;
-  final double price;
-  final double averageRating;
-  final List<String> imageUrls;
-
-  Product({
-    required this.id,
-    required this.name,
-    required this.category,
-    required this.price,
-    required this.averageRating,
-    required this.imageUrls,
-  });
-
-  factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['_id'].toString(),
-      name: (json['name'] ?? 'Unnamed Product').toString(),
-      category: (json['category'] ?? 'Uncategorized').toString(),
-      price: double.tryParse('${json['price'] ?? 0}') ?? 0,
-      averageRating: double.tryParse('${json['averageRating'] ?? 0}') ?? 0,
-      imageUrls: List<String>.from(json['imageUrls'] ?? const []),
-    );
-  }
-}
 
 class VendorMyProductsScreen extends StatefulWidget {
   const VendorMyProductsScreen({super.key});
@@ -115,41 +88,18 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
     }
   }
 
-  void _showComingSoonDialog() {
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VendorUi.whiteBackground,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: VendorUi.border),
-        ),
-        title: const Text(
-          'Use the seller dashboard',
-          style: TextStyle(
-            color: VendorUi.deepNavyBlue,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        content: const Text(
-          'Product creation and editing live inside the seller dashboard flow so your catalogue and metrics stay aligned.',
-          style: TextStyle(color: VendorUi.textMuted, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(color: VendorUi.deepNavyBlue),
-            ),
-          ),
-        ],
+  Future<void> _openProductEditor([Product? product]) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddProductScreen(initialProduct: product),
       ),
     );
+    if (changed == true) await _fetchVendorProducts();
   }
 
   Future<void> _deleteProduct(String productId) async {
-    final confirm = await showDialog<bool>(
+    final confirm =
+        await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: VendorUi.whiteBackground,
@@ -217,7 +167,45 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}')),
+        SnackBar(
+          content: Text(
+            'Error: ${e.toString().replaceFirst('Exception: ', '')}',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _archiveProduct(Product product) async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('Authentication token not found.');
+      final response = await http.patch(
+        Uri.parse('$baseUrl/api/products/${product.id}/archive'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'archived': product.isActive}),
+      );
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(body['message'] ?? 'Unable to update listing status.');
+      }
+      await _fetchVendorProducts();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(body['message']?.toString() ?? 'Listing updated.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+        ),
       );
     }
   }
@@ -240,7 +228,7 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
         ),
         body: _buildBody(),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _showComingSoonDialog,
+          onPressed: _openProductEditor,
           icon: const Icon(Icons.add_box_outlined),
           label: const Text('Add Product'),
         ),
@@ -253,8 +241,9 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
       0,
       (sum, product) => sum + product.price,
     );
-    final ratedProducts =
-        _products.where((product) => product.averageRating > 0).length;
+    final ratedProducts = _products
+        .where((product) => product.averageRating > 0)
+        .length;
 
     return RefreshIndicator(
       onRefresh: _fetchVendorProducts,
@@ -276,10 +265,7 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
                 label: 'Active listings',
                 value: '${_products.length}',
               ),
-              VendorHeroStat(
-                label: 'Rated products',
-                value: '$ratedProducts',
-              ),
+              VendorHeroStat(label: 'Rated products', value: '$ratedProducts'),
               VendorHeroStat(
                 label: 'Catalogue value',
                 value: '₦${totalValue.toStringAsFixed(0)}',
@@ -290,7 +276,8 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
           if (_isLoading)
             const VendorPanel(
               title: 'Loading catalogue',
-              subtitle: 'We are syncing your latest products and performance data.',
+              subtitle:
+                  'We are syncing your latest products and performance data.',
               child: SizedBox(
                 height: 96,
                 child: Center(
@@ -344,10 +331,7 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
                   const SizedBox(height: 8),
                   const Text(
                     'Use the add product action to publish your first listing.',
-                    style: TextStyle(
-                      color: VendorUi.textMuted,
-                      height: 1.5,
-                    ),
+                    style: TextStyle(color: VendorUi.textMuted, height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -416,7 +400,8 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
   Widget _buildAnalyticsCard() {
     final Map<String, int> categoryCounts = {};
     for (final product in _products) {
-      categoryCounts[product.category] = (categoryCounts[product.category] ?? 0) + 1;
+      categoryCounts[product.category] =
+          (categoryCounts[product.category] ?? 0) + 1;
     }
 
     const palette = <Color>[
@@ -486,7 +471,9 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
       }
     }
 
-    final barGroups = ratingCounts.entries.toList().asMap().entries.map((entry) {
+    final barGroups = ratingCounts.entries.toList().asMap().entries.map((
+      entry,
+    ) {
       return BarChartGroupData(
         x: entry.key,
         barRods: [
@@ -502,7 +489,8 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
 
     return VendorPanel(
       title: 'Ratings snapshot',
-      subtitle: 'Understand how your catalogue is performing across review bands.',
+      subtitle:
+          'Understand how your catalogue is performing across review bands.',
       child: SizedBox(
         height: 220,
         child: BarChart(
@@ -598,7 +586,8 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
           ),
           _buildTipCard(
             icon: Icons.support_agent,
-            text: 'Responsive support reduces cancellations and refund requests.',
+            text:
+                'Responsive support reduces cancellations and refund requests.',
           ),
           const SizedBox(height: 20),
           const Text(
@@ -610,10 +599,18 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
             ),
           ),
           const SizedBox(height: 8),
-          _buildBenefitText('Higher ratings increase buyer trust and confidence.'),
-          _buildBenefitText('Better perception improves repeat purchase chances.'),
-          _buildBenefitText('Top-rated products tend to rank better in discovery.'),
-          _buildBenefitText('Stronger reviews sharpen your seller reputation overall.'),
+          _buildBenefitText(
+            'Higher ratings increase buyer trust and confidence.',
+          ),
+          _buildBenefitText(
+            'Better perception improves repeat purchase chances.',
+          ),
+          _buildBenefitText(
+            'Top-rated products tend to rank better in discovery.',
+          ),
+          _buildBenefitText(
+            'Stronger reviews sharpen your seller reputation overall.',
+          ),
           const SizedBox(height: 20),
           _buildAnimatedBoostButton(),
         ],
@@ -621,10 +618,7 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
     );
   }
 
-  Widget _buildTipCard({
-    required IconData icon,
-    required String text,
-  }) {
+  Widget _buildTipCard({required IconData icon, required String text}) {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 6),
       padding: const EdgeInsets.all(14),
@@ -681,17 +675,14 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
   Widget _buildAnimatedBoostButton() {
     return ScaleTransition(
       scale: Tween(begin: 1.0, end: 1.03).animate(
-        CurvedAnimation(
-          parent: _animationController,
-          curve: Curves.easeInOut,
-        ),
+        CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
       ),
       child: SizedBox(
         width: double.infinity,
         child: ElevatedButton.icon(
-          onPressed: _showComingSoonDialog,
+          onPressed: null,
           icon: const Icon(Icons.trending_up_rounded),
-          label: const Text('Boost Product Visibility'),
+          label: const Text('Boosting coming later'),
         ),
       ),
     );
@@ -767,6 +758,18 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
                     ),
                   ),
                 ),
+                if (product.ownershipLocked) ...[
+                  const SizedBox(width: 6),
+                  const Tooltip(
+                    message:
+                        'This product has order history. Archive is available; editing and deletion are locked.',
+                    child: Icon(
+                      Icons.lock_outline_rounded,
+                      size: 17,
+                      color: VendorUi.warning,
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 8),
@@ -798,26 +801,34 @@ class _VendorMyProductsScreenState extends State<VendorMyProductsScreen>
           icon: const Icon(Icons.more_vert, color: VendorUi.deepNavyBlue),
           onSelected: (value) {
             if (value == 'edit') {
-              _showComingSoonDialog();
+              if (!product.ownershipLocked) _openProductEditor(product);
             } else if (value == 'delete') {
               _deleteProduct(product.id);
+            } else if (value == 'archive') {
+              _archiveProduct(product);
             }
           },
-          itemBuilder: (context) => const [
+          itemBuilder: (context) => [
             PopupMenuItem(
               value: 'edit',
-              child: Text(
+              enabled: !product.ownershipLocked,
+              child: const Text(
                 'Edit',
                 style: TextStyle(color: VendorUi.deepNavyBlue),
               ),
             ),
             PopupMenuItem(
-              value: 'delete',
+              value: 'archive',
               child: Text(
-                'Delete',
-                style: TextStyle(color: VendorUi.danger),
+                product.isActive ? 'Archive' : 'Restore',
+                style: const TextStyle(color: VendorUi.deepNavyBlue),
               ),
             ),
+            if (!product.ownershipLocked)
+              const PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete', style: TextStyle(color: VendorUi.danger)),
+              ),
           ],
         ),
       ),

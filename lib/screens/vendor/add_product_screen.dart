@@ -9,9 +9,12 @@ import '../../constants.dart';
 import '../../services/address_resolution_service.dart';
 import '../../services/location_access_service.dart';
 import '../../widgets/vendor_ui.dart';
+import '../../models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  final Product? initialProduct;
+
+  const AddProductScreen({super.key, this.initialProduct});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -343,7 +346,47 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _searchController.addListener(_onSearchChanged);
     // Initialize with one custom size
     _customSizes.add(_customSize);
+    _prefillProductForEditing();
     _loadPharmacistStatus();
+  }
+
+  bool get _isEditing => widget.initialProduct != null;
+
+  void _prefillProductForEditing() {
+    final product = widget.initialProduct;
+    if (product == null) return;
+    _nameController.text = product.name;
+    _descriptionController.text = product.description;
+    _priceController.text = product.price.toStringAsFixed(2);
+    _stockQuantityController.text = product.stockQuantity.toString();
+    _selectedCategory = product.category;
+    _restaurantNameController.text = product.restaurantName ?? '';
+    _foodInformationController.text = product.foodInformation ?? '';
+    _productLocationAddressController.text =
+        product.vendorLocationAddress ?? '';
+    _productLatitudeController.text = product.vendorLatitude?.toString() ?? '';
+    _productLongitudeController.text =
+        product.vendorLongitude?.toString() ?? '';
+    _isFlashSale = product.isFlashsale;
+    _requiresPrescription = product.requiresPrescription;
+    _requiresPharmacistApproval = product.requiresPharmacistApproval;
+    _isOverTheCounter = product.isOverTheCounter;
+    _selectedSizeType = product.sizeData?['type']?.toString();
+    _selectedSizes = product.availableSizes.toSet();
+    _showSizeSection = _selectedSizeType != null;
+    _isSizeRequired = _showSizeSection;
+    _orderStartTime = _parseTime(product.orderStartTime, _orderStartTime);
+    _orderEndTime = _parseTime(product.orderEndTime, _orderEndTime);
+  }
+
+  TimeOfDay _parseTime(String? value, TimeOfDay fallback) {
+    final parts = value?.split(':') ?? const [];
+    if (parts.length != 2) return fallback;
+    final hour = int.tryParse(parts[0]);
+    final minute = int.tryParse(parts[1]);
+    if (hour == null || minute == null || hour > 23 || minute > 59)
+      return fallback;
+    return TimeOfDay(hour: hour, minute: minute);
   }
 
   @override
@@ -2197,7 +2240,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    if (_mainImage == null) {
+    if (_mainImage == null && !_isEditing) {
       setState(() {
         _errorMessage = 'Please select a main product image.';
       });
@@ -2225,8 +2268,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    final Uri url = Uri.parse('$baseUrl/api/products');
-    var request = http.MultipartRequest('POST', url);
+    final Uri url = Uri.parse(
+      _isEditing
+          ? '$baseUrl/api/products/${widget.initialProduct!.id}'
+          : '$baseUrl/api/products',
+    );
+    var request = http.MultipartRequest(_isEditing ? 'PUT' : 'POST', url);
 
     // Add text fields
     request.fields['name'] = name;
@@ -2279,13 +2326,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
 
     // 1. Add Main Image
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        'mainImage',
-        _mainImage!.path,
-        filename: _mainImage!.path.split('/').last,
-      ),
-    );
+    if (_mainImage != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'mainImage',
+          _mainImage!.path,
+          filename: _mainImage!.path.split('/').last,
+        ),
+      );
+    }
 
     // 2. Add Extra Images (if any)
     for (var file in _extraImages) {
@@ -2307,11 +2356,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
       final Map<String, dynamic> responseData = jsonDecode(response.body);
       if (!mounted) return;
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 201 || response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              responseData['message'] ?? 'Product added successfully!',
+              responseData['message'] ??
+                  (_isEditing
+                      ? 'Product updated successfully!'
+                      : 'Product added successfully!'),
             ),
             duration: const Duration(seconds: 2),
           ),
