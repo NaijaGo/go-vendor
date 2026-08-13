@@ -117,7 +117,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         _isSocketConnected = true;
         _isConnecting = false;
       });
-      _emitAvailability(_isOnline);
+      unawaited(_emitAvailability(_isOnline));
       Future.wait([_loadQueueFromRest(token), _loadOnlinePharmacists(token)]);
     });
 
@@ -194,16 +194,27 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     return <String, dynamic>{};
   }
 
-  void _emitAvailability(bool online) {
-    _socket?.emitWithAck(
+  Future<bool> _emitAvailability(bool online) async {
+    final socket = _socket;
+    if (socket?.connected != true) return !online;
+
+    final completer = Completer<bool>();
+    socket!.emitWithAck(
       'pharmacist_status_update',
       {'online': online},
       ack: (response) {
         final data = _ackPayload(response);
+        if (!completer.isCompleted) {
+          completer.complete(data['success'] == true);
+        }
         if (data['success'] != true) {
           debugPrint('Pharmacist availability socket update failed: $data');
         }
       },
+    );
+    return completer.future.timeout(
+      const Duration(seconds: 8),
+      onTimeout: () => false,
     );
   }
 
@@ -219,8 +230,6 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       });
     }
     await prefs.setBool(_pharmacistOnlinePreferenceKey, online);
-    _emitAvailability(online);
-
     try {
       final token = await _getPharmacistAuthToken();
       if (token == null) throw Exception('Missing token');
@@ -235,6 +244,10 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw Exception('Status ${response.statusCode}');
       }
+      final liveStatusConfirmed = await _emitAvailability(online);
+      if (online && !liveStatusConfirmed) {
+        throw Exception('Live pharmacist presence was not confirmed');
+      }
       if (online) {
         _showNotification(
           'You are online',
@@ -244,7 +257,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
       await _loadOnlinePharmacists(token);
     } catch (error) {
       await prefs.setBool(_pharmacistOnlinePreferenceKey, previous);
-      _emitAvailability(previous);
+      unawaited(_emitAvailability(previous));
       if (mounted) {
         setState(() => _isOnline = previous);
       }
