@@ -7,6 +7,8 @@ workflows:
       flutter: 3.32.8
       vars:
         PACKAGE_NAME: "com.naijago.govendor"
+        API_BASE_URL: "https://naijago-backend.onrender.com"
+        ONESIGNAL_APP_ID: "76438b8d-4b39-49eb-805c-11eb934f5a66"
     cache:
       cache_paths:
         - ~/.pub-cache
@@ -41,8 +43,12 @@ workflows:
           } > "$CM_BUILD_DIR/android/key.properties"
       - name: Build Android artifacts
         script: |
-          flutter build apk --release
-          flutter build appbundle --release
+          flutter build apk --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
+          flutter build appbundle --release \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/release/*.aab
@@ -55,6 +61,9 @@ workflows:
       flutter: 3.32.8
       xcode: latest
       cocoapods: default
+      vars:
+        API_BASE_URL: "https://naijago-backend.onrender.com"
+        ONESIGNAL_APP_ID: "76438b8d-4b39-49eb-805c-11eb934f5a66"
     cache:
       cache_paths:
         - ~/.pub-cache
@@ -77,6 +86,8 @@ workflows:
           flutter test
       - name: Build iOS without codesigning
         script: |
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
     artifacts:
       - build/ios/iphoneos/*.app
