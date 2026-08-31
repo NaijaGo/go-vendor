@@ -123,6 +123,7 @@ class VendorOrderItem {
   final String? productImageUrl;
   final int quantity;
   final double unitPrice;
+  final String customerNote;
 
   const VendorOrderItem({
     required this.productId,
@@ -130,6 +131,7 @@ class VendorOrderItem {
     this.productImageUrl,
     required this.quantity,
     required this.unitPrice,
+    this.customerNote = '',
   });
 
   factory VendorOrderItem.fromJson(Map<String, dynamic> json) {
@@ -143,6 +145,7 @@ class VendorOrderItem {
           : null,
       quantity: int.tryParse('${json['quantity'] ?? 1}') ?? 1,
       unitPrice: double.tryParse('${json['price'] ?? 0}') ?? 0,
+      customerNote: (json['customerNote'] ?? '').toString(),
     );
   }
 }
@@ -1034,6 +1037,26 @@ class _OrderTile extends StatelessWidget {
               child: _OrderItemRow(item: item),
             ),
           ),
+          if (order.items.any(
+            (item) => item.customerNote.trim().isNotEmpty,
+          )) ...[
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: Colors.amber.shade700.withValues(alpha: 0.35),
+                ),
+              ),
+              child: Text(
+                'Customer instruction: ${order.items.firstWhere((item) => item.customerNote.trim().isNotEmpty).customerNote}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
           if (order.orderStatus == 'rejected' &&
               order.rejectionReason.trim().isNotEmpty) ...[
             const SizedBox(height: 10),

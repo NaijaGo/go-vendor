@@ -1083,7 +1083,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const CategoryProductsScreen(
-              category: 'Health & Beauty > Medicine',
+              category: 'Cosmetics & Beauty > Medicine',
             ),
           ),
         );
@@ -2205,7 +2205,7 @@ class _CollapsingSearchHeader extends SliverPersistentHeaderDelegate {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const CategoryProductsScreen(
-                        category: 'Health & Beauty > Medicine',
+                        category: 'Cosmetics & Beauty > Medicine',
                       ),
                     ),
                   );

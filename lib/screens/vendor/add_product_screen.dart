@@ -85,7 +85,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       'Underwear & Lingerie',
       'Sportswear',
     ],
-    'Health & Beauty': [
+    'Cosmetics & Beauty': [
       'Make Up',
       'Fragrance',
       'Hair Care',
@@ -263,8 +263,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
       'Kitchen Utensils',
       'Food Packaging',
     ],
-    'Travel & Tourism': ['Travel Accessories', 'Luggage', 'Hotel Supplies'],
-    'Wedding & Events': ['Wedding Attire'],
   };
 
   // NEW: Categories that REQUIRE size selection

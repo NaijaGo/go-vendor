@@ -77,7 +77,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'Underwear & Lingerie',
       'Sportswear',
     ],
-    'Health & Beauty': [
+    'Cosmetics & Beauty': [
       'Make Up',
       'Fragrance',
       'Hair Care',
@@ -247,15 +247,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'Kitchen Utensils',
       'Food Packaging',
     ],
-    'Travel & Tourism': ['Travel Accessories', 'Luggage', 'Hotel Supplies'],
-    'Wedding & Events': ['Wedding Attire'],
   };
 
   final Map<String, IconData> _categoryIcons = {
     'Home & Office': Ionicons.home_outline,
     'Phones & Tablets': Ionicons.phone_portrait_outline,
     'Fashion': Ionicons.shirt_outline,
-    'Health & Beauty': Ionicons.heart_outline,
+    'Cosmetics & Beauty': Ionicons.heart_outline,
     'Electronics': Ionicons.hardware_chip_outline,
     'Computing': Ionicons.laptop_outline,
     'Groceries': Ionicons.cart_outline,
@@ -274,8 +272,6 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     'Toys & Games': Ionicons.rocket_outline,
     'Photography': Ionicons.camera_outline,
     'Food & Beverage': Ionicons.restaurant_outline,
-    'Travel & Tourism': Ionicons.airplane_outline,
-    'Wedding & Events': Ionicons.heart_circle_outline,
   };
 
   final Map<String, String> _subCategoryImages = {
@@ -619,7 +615,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     context,
                     MaterialPageRoute(
                       builder: (_) => const CategoryProductsScreen(
-                        category: 'Health & Beauty > Medicine',
+                        category: 'Cosmetics & Beauty > Medicine',
                       ),
                     ),
                   );

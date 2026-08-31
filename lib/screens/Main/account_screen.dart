@@ -19,6 +19,7 @@ import 'faq_screen.dart';
 import 'referral_screen.dart';
 import 'vendor_my_products_screen.dart';
 import '../../screens/vendor/orders_recived_screen.dart.dart';
+import '../../screens/vendor/pickup_orders_screen.dart';
 import '../../screens/vendor/vendor_business_profile_screen.dart';
 import 'pharmacist_dashboard.dart'; // ✅ Import PharmacistDashboard
 import '../../widgets/pharmacy_ui.dart';
@@ -248,7 +249,9 @@ class _AccountScreenState extends State<AccountScreen>
     final String? token = prefs.getString('jwt_token');
 
     if (token == null || token.isEmpty) {
-      _showSupportSnackBar('Authentication token not found. Please log in again.');
+      _showSupportSnackBar(
+        'Authentication token not found. Please log in again.',
+      );
       return;
     }
 
@@ -284,7 +287,7 @@ class _AccountScreenState extends State<AccountScreen>
               preferences?['appOrderAlerts'] as bool? ?? appOrderAlerts;
           _whatsappOrderAlertsEnabled =
               preferences?['whatsappOrderAlerts'] as bool? ??
-                  whatsappOrderAlerts;
+              whatsappOrderAlerts;
           _promotionsEnabled =
               preferences?['promotions'] as bool? ?? promotions;
           _priceAlertsEnabled =
@@ -301,7 +304,9 @@ class _AccountScreenState extends State<AccountScreen>
       }
     } catch (e) {
       debugPrint('Notification preference update error: $e');
-      _showSupportSnackBar('Unable to update notification preferences right now.');
+      _showSupportSnackBar(
+        'Unable to update notification preferences right now.',
+      );
     } finally {
       if (mounted) {
         setState(() => _isSavingNotificationPreferences = false);
@@ -373,7 +378,9 @@ class _AccountScreenState extends State<AccountScreen>
                               Text(
                                 'Choose how NaijaGo should alert you.',
                                 style: TextStyle(
-                                  color: color.onSurface.withValues(alpha: 0.62),
+                                  color: color.onSurface.withValues(
+                                    alpha: 0.62,
+                                  ),
                                   fontSize: 13,
                                 ),
                               ),
@@ -395,7 +402,8 @@ class _AccountScreenState extends State<AccountScreen>
                       _buildNotificationSwitch(
                         color: color,
                         title: 'App order alerts',
-                        subtitle: 'Show in-app alerts when a new order arrives.',
+                        subtitle:
+                            'Show in-app alerts when a new order arrives.',
                         value: appOrderAlerts,
                         onChanged: (value) =>
                             setSheetState(() => appOrderAlerts = value),
@@ -406,9 +414,8 @@ class _AccountScreenState extends State<AccountScreen>
                         subtitle:
                             'Send WhatsApp order alerts to your vendor phone.',
                         value: whatsappOrderAlerts,
-                        onChanged: (value) => setSheetState(
-                          () => whatsappOrderAlerts = value,
-                        ),
+                        onChanged: (value) =>
+                            setSheetState(() => whatsappOrderAlerts = value),
                       ),
                     ],
                     _buildNotificationSwitch(
@@ -434,12 +441,12 @@ class _AccountScreenState extends State<AccountScreen>
                         onPressed: _isSavingNotificationPreferences
                             ? null
                             : () => _saveNotificationPreferences(
-                                  orderUpdates: orderUpdates,
-                                  appOrderAlerts: appOrderAlerts,
-                                  whatsappOrderAlerts: whatsappOrderAlerts,
-                                  promotions: promotions,
-                                  priceAlerts: priceAlerts,
-                                ),
+                                orderUpdates: orderUpdates,
+                                appOrderAlerts: appOrderAlerts,
+                                whatsappOrderAlerts: whatsappOrderAlerts,
+                                promotions: promotions,
+                                priceAlerts: priceAlerts,
+                              ),
                         style: FilledButton.styleFrom(
                           backgroundColor: color.primary,
                           shape: RoundedRectangleBorder(
@@ -1021,6 +1028,16 @@ class _AccountScreenState extends State<AccountScreen>
         _buildAccountListItem(
           context,
           color,
+          Icons.storefront_outlined,
+          'Pickup Orders',
+          'Accept, prepare and securely verify customer collections',
+          () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const PickupOrdersScreen())),
+        ),
+        _buildAccountListItem(
+          context,
+          color,
           Icons.payments_outlined,
           'Earnings Dashboard',
           'Vendor Wallet: ₦${_vendorWalletBalance.toStringAsFixed(2)} | App Wallet: ₦${_appWalletBalance.toStringAsFixed(2)}',
@@ -1531,10 +1548,7 @@ class _AccountScreenState extends State<AccountScreen>
         activeColor: color.primary,
         title: Text(
           title,
-          style: TextStyle(
-            color: color.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: color.onSurface, fontWeight: FontWeight.w700),
         ),
         subtitle: Text(
           subtitle,

@@ -36,6 +36,7 @@ dependencies:
   onesignal_flutter: ^5.1.2
   equatable: any
   app_links: ^6.4.1
+  mobile_scanner: 7.1.3
 
 dev_dependencies:
   flutter_test:
