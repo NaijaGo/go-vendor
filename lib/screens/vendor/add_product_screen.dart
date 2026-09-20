@@ -9,6 +9,8 @@ import '../../constants.dart';
 import '../../services/address_resolution_service.dart';
 import '../../services/location_access_service.dart';
 import '../../widgets/vendor_ui.dart';
+import '../../widgets/product_video_upload_field.dart';
+import '../../widgets/product_search_attributes_field.dart';
 import '../../models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
@@ -321,6 +323,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   };
 
   File? _mainImage;
+  String? _videoAssetId;
+  bool _videoReady = true;
+  Map<String, String> _searchDetails = {};
   final List<File> _extraImages = [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -353,6 +358,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _prefillProductForEditing() {
     final product = widget.initialProduct;
     if (product == null) return;
+    _searchDetails = Map<String, String>.from(product.searchDetails);
     _nameController.text = product.name;
     _descriptionController.text = product.description;
     _priceController.text = product.price.toStringAsFixed(2);
@@ -2185,6 +2191,13 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _addProduct() async {
+    if (!_videoReady) {
+      setState(
+        () => _errorMessage =
+            'Finish uploading the video, or remove it before saving.',
+      );
+      return;
+    }
     // NEW: Validate multiple sizes if required
     if (_isSizeRequired) {
       if (_selectedSizeType == null) {
@@ -2280,6 +2293,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     request.fields['category'] = _selectedCategory!;
     request.fields['stockQuantity'] = stockQuantity.toString();
     request.fields['is_flashsale'] = _isFlashSale.toString();
+    if (_videoAssetId != null) request.fields['videoAssetId'] = _videoAssetId!;
+    request.fields.addAll(_searchDetails);
 
     final productLocationAddress = _productLocationAddressController.text
         .trim();
@@ -2644,6 +2659,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ),
                               const SizedBox(height: 20),
 
+                              ProductVideoUploadField(
+                                initialAssetId:
+                                    widget.initialProduct?.videoAssetId,
+                                onChanged: (assetId) =>
+                                    setState(() => _videoAssetId = assetId),
+                                onReadyChanged: (ready) =>
+                                    setState(() => _videoReady = ready),
+                              ),
+                              ProductSearchAttributesField(
+                                initialValues:
+                                    widget.initialProduct?.searchDetails ??
+                                    const {},
+                                onChanged: (field, value) =>
+                                    _searchDetails[field] = value,
+                              ),
+
                               // Product Name
                               TextFormField(
                                 controller: _nameController,
@@ -2834,7 +2865,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                       ),
                                     )
                                   : ElevatedButton(
-                                      onPressed: _addProduct,
+                                      onPressed: _videoReady
+                                          ? _addProduct
+                                          : null,
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: VendorUi.deepNavyBlue,
                                         foregroundColor:

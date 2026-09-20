@@ -27,6 +27,8 @@ class Product {
   final bool requiresPharmacistApproval;
   final bool isOverTheCounter;
   final List<String> imageUrls;
+  final String? videoAssetId;
+  final Map<String, String> searchDetails;
   final int salesCount;
   final double averageRating;
   final int numReviews;
@@ -39,6 +41,8 @@ class Product {
 
   Product({
     required this.id,
+    this.videoAssetId,
+    this.searchDetails = const {},
     required this.name,
     required this.description,
     required this.price,
@@ -234,6 +238,14 @@ class Product {
       isOverTheCounter:
           json['isOverTheCounter'] == true || json['isOTC'] == true,
       imageUrls: parsedImageUrls,
+      videoAssetId: json['videoAssetId']?.toString(),
+      searchDetails: {
+        for (final field in ['gender', 'ageGroup', 'productType', 'brand'])
+          field: json[field]?.toString() ?? '',
+        'searchTags': json['searchTags'] is List
+            ? (json['searchTags'] as List).join(', ')
+            : json['searchTags']?.toString() ?? '',
+      },
       salesCount: json['salesCount'] ?? 0,
       averageRating: _parseDouble(json['averageRating']) ?? 0,
       numReviews: int.tryParse(json['numReviews']?.toString() ?? '') ?? 0,
@@ -284,6 +296,8 @@ class Product {
     'requiresPharmacistApproval': requiresPharmacistApproval,
     'isOverTheCounter': isOverTheCounter,
     'imageUrls': imageUrls,
+    'videoAssetId': videoAssetId,
+    ...searchDetails,
     'salesCount': salesCount,
     'averageRating': averageRating,
     'numReviews': numReviews,
