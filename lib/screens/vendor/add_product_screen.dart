@@ -2515,6 +2515,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               const SizedBox(height: 24),
 
                               // 1. MAIN IMAGE PICKER (REQUIRED)
+                              const Text(
+                                'Use photos you have permission to upload. NaijaGo may process them to improve backgrounds and lighting. Originals are retained and refined versions require admin review.',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              const SizedBox(height: 8),
                               Text(
                                 'Main Product Image (Required)',
                                 style: TextStyle(
