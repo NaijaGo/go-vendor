@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'explore_notification_intent.dart';
 
 class OneSignalService {
   static const String _appId = String.fromEnvironment(
@@ -20,11 +21,13 @@ class OneSignalService {
         final data = event.notification.additionalData ?? {};
         final type = data['type']?.toString() ?? '';
         if (type == 'new_paid_order_vendor' ||
+            type == 'explore_activity' ||
             type == 'pharmacy_consultation_request') {
           event.notification.display();
         }
       });
       OneSignal.Notifications.addClickListener((event) {
+        ExploreNotificationIntent.receive(event.notification.additionalData);
         debugPrint(
           'Vendor notification clicked: ${event.notification.additionalData}',
         );
@@ -87,6 +90,7 @@ class OneSignalService {
   }
 
   static Future<void> logout() async {
+    ExploreNotificationIntent.clear();
     try {
       await OneSignal.logout();
     } catch (error) {

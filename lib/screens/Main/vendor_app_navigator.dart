@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 
 import '../../constants.dart';
 import '../../services/socket_service.dart';
+import '../../services/explore_notification_intent.dart';
+import 'explore_comments_screen.dart';
 import '../vendor/add_product_screen.dart';
 import '../vendor/orders_recived_screen.dart.dart';
 import 'account_screen.dart';
@@ -47,6 +49,18 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
     super.initState();
     _notifications = _dedupeNotifications(_readNotifications(widget.user));
     _connectVendorNotifications();
+    ExploreNotificationIntent.changed.addListener(_openExploreNotification);
+    _openExploreNotification();
+  }
+
+  void _openExploreNotification() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_isApprovedVendor) return;
+      final destination = ExploreNotificationIntent.take();
+      if (destination == null) return;
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => ExploreCommentsScreen(
+        type: destination.type, itemId: destination.id, parentId: destination.parentId)));
+    });
   }
 
   @override
@@ -58,11 +72,13 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
         ..._notifications,
       ]);
       _connectVendorNotifications();
+      _openExploreNotification();
     }
   }
 
   @override
   void dispose() {
+    ExploreNotificationIntent.changed.removeListener(_openExploreNotification);
     _socketService.dispose();
     super.dispose();
   }

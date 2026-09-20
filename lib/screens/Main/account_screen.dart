@@ -20,6 +20,7 @@ import 'referral_screen.dart';
 import 'vendor_my_products_screen.dart';
 import '../../screens/vendor/orders_recived_screen.dart.dart';
 import '../../screens/vendor/pickup_orders_screen.dart';
+import '../../screens/vendor/explore_activity_screen.dart';
 import '../../screens/vendor/vendor_business_profile_screen.dart';
 import 'pharmacist_dashboard.dart'; // ✅ Import PharmacistDashboard
 import '../../widgets/pharmacy_ui.dart';
@@ -72,6 +73,7 @@ class _AccountScreenState extends State<AccountScreen>
   bool _whatsappOrderAlertsEnabled = true;
   bool _promotionsEnabled = true;
   bool _priceAlertsEnabled = true;
+  bool _exploreActivityEnabled = true;
   bool _isSavingNotificationPreferences = false;
 
   @override
@@ -213,6 +215,8 @@ class _AccountScreenState extends State<AccountScreen>
               notificationPreferences?['promotions'] as bool? ?? true;
           _priceAlertsEnabled =
               notificationPreferences?['priceAlerts'] as bool? ?? true;
+          _exploreActivityEnabled =
+              notificationPreferences?['exploreActivity'] as bool? ?? true;
         });
       } else {
         final responseData = jsonDecode(response.body);
@@ -244,6 +248,7 @@ class _AccountScreenState extends State<AccountScreen>
     required bool whatsappOrderAlerts,
     required bool promotions,
     required bool priceAlerts,
+    required bool exploreActivity,
   }) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('jwt_token');
@@ -270,6 +275,7 @@ class _AccountScreenState extends State<AccountScreen>
           'whatsappOrderAlerts': whatsappOrderAlerts,
           'promotions': promotions,
           'priceAlerts': priceAlerts,
+          'exploreActivity': exploreActivity,
         }),
       );
 
@@ -292,6 +298,8 @@ class _AccountScreenState extends State<AccountScreen>
               preferences?['promotions'] as bool? ?? promotions;
           _priceAlertsEnabled =
               preferences?['priceAlerts'] as bool? ?? priceAlerts;
+          _exploreActivityEnabled =
+              preferences?['exploreActivity'] as bool? ?? exploreActivity;
         });
         if (!mounted) return;
         Navigator.of(context).pop();
@@ -320,6 +328,7 @@ class _AccountScreenState extends State<AccountScreen>
     bool whatsappOrderAlerts = _whatsappOrderAlertsEnabled;
     bool promotions = _promotionsEnabled;
     bool priceAlerts = _priceAlertsEnabled;
+    bool exploreActivity = _exploreActivityEnabled;
 
     showModalBottomSheet<void>(
       context: context,
@@ -343,130 +352,143 @@ class _AccountScreenState extends State<AccountScreen>
               ),
               child: SafeArea(
                 top: false,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: color.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(8),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: color.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.notifications_active_outlined,
+                              color: color.primary,
+                            ),
                           ),
-                          child: Icon(
-                            Icons.notifications_active_outlined,
-                            color: color.primary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Notification Settings',
-                                style: TextStyle(
-                                  color: color.onSurface,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Choose how NaijaGo should alert you.',
-                                style: TextStyle(
-                                  color: color.onSurface.withValues(
-                                    alpha: 0.62,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Notification Settings',
+                                  style: TextStyle(
+                                    color: color.onSurface,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
                                   ),
-                                  fontSize: 13,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Choose how NaijaGo should alert you.',
+                                  style: TextStyle(
+                                    color: color.onSurface.withValues(
+                                      alpha: 0.62,
+                                    ),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      _buildNotificationSwitch(
+                        color: color,
+                        title: 'Order updates',
+                        subtitle:
+                            'General buyer and seller order status alerts.',
+                        value: orderUpdates,
+                        onChanged: (value) =>
+                            setSheetState(() => orderUpdates = value),
+                      ),
+                      if (_isVendor) ...[
+                        _buildNotificationSwitch(
+                          color: color,
+                          title: 'App order alerts',
+                          subtitle:
+                              'Show in-app alerts when a new order arrives.',
+                          value: appOrderAlerts,
+                          onChanged: (value) =>
+                              setSheetState(() => appOrderAlerts = value),
+                        ),
+                        _buildNotificationSwitch(
+                          color: color,
+                          title: 'WhatsApp order alerts',
+                          subtitle:
+                              'Send WhatsApp order alerts to your vendor phone.',
+                          value: whatsappOrderAlerts,
+                          onChanged: (value) =>
+                              setSheetState(() => whatsappOrderAlerts = value),
                         ),
                       ],
-                    ),
-                    const SizedBox(height: 18),
-                    _buildNotificationSwitch(
-                      color: color,
-                      title: 'Order updates',
-                      subtitle: 'General buyer and seller order status alerts.',
-                      value: orderUpdates,
-                      onChanged: (value) =>
-                          setSheetState(() => orderUpdates = value),
-                    ),
-                    if (_isVendor) ...[
                       _buildNotificationSwitch(
                         color: color,
-                        title: 'App order alerts',
+                        title: 'Promotions',
                         subtitle:
-                            'Show in-app alerts when a new order arrives.',
-                        value: appOrderAlerts,
+                            'Deals, restaurant moments, and campaign news.',
+                        value: promotions,
                         onChanged: (value) =>
-                            setSheetState(() => appOrderAlerts = value),
+                            setSheetState(() => promotions = value),
                       ),
                       _buildNotificationSwitch(
                         color: color,
-                        title: 'WhatsApp order alerts',
-                        subtitle:
-                            'Send WhatsApp order alerts to your vendor phone.',
-                        value: whatsappOrderAlerts,
+                        title: 'Explore activity',
+                        subtitle: 'Reactions, comments and replies on Explore.',
+                        value: exploreActivity,
                         onChanged: (value) =>
-                            setSheetState(() => whatsappOrderAlerts = value),
+                            setSheetState(() => exploreActivity = value),
+                      ),
+                      _buildNotificationSwitch(
+                        color: color,
+                        title: 'Price alerts',
+                        subtitle: 'Saved product and market price changes.',
+                        value: priceAlerts,
+                        onChanged: (value) =>
+                            setSheetState(() => priceAlerts = value),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          onPressed: _isSavingNotificationPreferences
+                              ? null
+                              : () => _saveNotificationPreferences(
+                                  orderUpdates: orderUpdates,
+                                  appOrderAlerts: appOrderAlerts,
+                                  whatsappOrderAlerts: whatsappOrderAlerts,
+                                  promotions: promotions,
+                                  priceAlerts: priceAlerts,
+                                  exploreActivity: exploreActivity,
+                                ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: color.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          ),
+                          child: _isSavingNotificationPreferences
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text('Save preferences'),
+                        ),
                       ),
                     ],
-                    _buildNotificationSwitch(
-                      color: color,
-                      title: 'Promotions',
-                      subtitle: 'Deals, restaurant moments, and campaign news.',
-                      value: promotions,
-                      onChanged: (value) =>
-                          setSheetState(() => promotions = value),
-                    ),
-                    _buildNotificationSwitch(
-                      color: color,
-                      title: 'Price alerts',
-                      subtitle: 'Saved product and market price changes.',
-                      value: priceAlerts,
-                      onChanged: (value) =>
-                          setSheetState(() => priceAlerts = value),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: _isSavingNotificationPreferences
-                            ? null
-                            : () => _saveNotificationPreferences(
-                                orderUpdates: orderUpdates,
-                                appOrderAlerts: appOrderAlerts,
-                                whatsappOrderAlerts: whatsappOrderAlerts,
-                                promotions: promotions,
-                                priceAlerts: priceAlerts,
-                              ),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: color.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: _isSavingNotificationPreferences
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Save preferences'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             );
@@ -1034,6 +1056,16 @@ class _AccountScreenState extends State<AccountScreen>
           () => Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (_) => const PickupOrdersScreen())),
+        ),
+        _buildAccountListItem(
+          context,
+          color,
+          Icons.forum_outlined,
+          'Explore conversations',
+          'Reply to customer questions on your products and videos',
+          () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ExploreActivityScreen()),
+          ),
         ),
         _buildAccountListItem(
           context,

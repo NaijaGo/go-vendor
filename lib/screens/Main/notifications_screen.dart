@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,6 +7,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants.dart';
+import '../../services/explore_notification_intent.dart';
+import 'explore_comments_screen.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/tech_glow_background.dart';
 
@@ -40,6 +43,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       .length;
 
   int get _readCount => _displayNotifications.length - _unreadCount;
+
+  void _openExplore(ExploreDestination destination, String notificationId, bool isRead) {
+    if (!isRead && notificationId.isNotEmpty) unawaited(_markNotificationAsRead(notificationId));
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => ExploreCommentsScreen(
+      type: destination.type, itemId: destination.id, parentId: destination.parentId)));
+  }
 
   Future<void> _markNotificationAsRead(String notificationId) async {
     if (notificationId.isEmpty || _markingIds.contains(notificationId)) {
@@ -343,6 +352,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget _buildNotificationCard(dynamic rawNotification) {
     final notification = Map<String, dynamic>.from(rawNotification as Map);
     final notificationId = notification['_id']?.toString() ?? '';
+    final exploreDestination = ExploreDestination.parse(notification);
     final isRead = notification['read'] == true;
     final isMarking =
         notificationId.isNotEmpty && _markingIds.contains(notificationId);
@@ -359,7 +369,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       padding: const EdgeInsets.only(bottom: 14),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: !isRead && !isMarking && notificationId.isNotEmpty
+        onTap: exploreDestination != null
+            ? () => _openExplore(exploreDestination, notificationId, isRead)
+            : !isRead && !isMarking && notificationId.isNotEmpty
             ? () => _markNotificationAsRead(notificationId)
             : null,
         child: AnimatedContainer(
