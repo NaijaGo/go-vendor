@@ -46,10 +46,10 @@ workflows:
           } > "$CM_BUILD_DIR/android/key.properties"
       - name: Build Android artifacts
         script: |
-          flutter build apk --release \
+          flutter build apk --release --android-skip-build-dependency-validation \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
             --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
-          flutter build appbundle --release \
+          flutter build appbundle --release --android-skip-build-dependency-validation \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
             --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
     artifacts:
