@@ -4,7 +4,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      flutter: 3.38.5
       vars:
         PACKAGE_NAME: "com.naijago.govendor"
         API_BASE_URL: "https://naijago-backend.onrender.com"
@@ -12,9 +12,10 @@ workflows:
     cache:
       cache_paths:
         - ~/.pub-cache
-        - ~/.gradle/caches
-        - ~/.gradle/wrapper
     scripts:
+      - name: Show Flutter version
+        script: |
+          flutter --version
       - name: Set up local.properties
         script: |
           echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
@@ -60,7 +61,7 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      flutter: 3.38.5
       xcode: latest
       cocoapods: default
       vars:
