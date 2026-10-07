@@ -21,6 +21,7 @@ import 'vendor_my_products_screen.dart';
 import '../../screens/vendor/orders_recived_screen.dart.dart';
 import '../../screens/vendor/pickup_orders_screen.dart';
 import '../../screens/vendor/explore_activity_screen.dart';
+import '../../screens/vendor/explore_publish_screen.dart';
 import '../../screens/vendor/vendor_business_profile_screen.dart';
 import 'pharmacist_dashboard.dart'; // ✅ Import PharmacistDashboard
 import '../../widgets/pharmacy_ui.dart';
@@ -1066,6 +1067,13 @@ class _AccountScreenState extends State<AccountScreen>
           () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ExploreActivityScreen()),
           ),
+        ),
+        _buildAccountListItem(
+          context, color, Icons.video_library_outlined,
+          'Publish Explore Videos',
+          'Upload gallery videos and reach NaijaGo customers',
+          () => Navigator.of(context).push(MaterialPageRoute(
+            builder: (_) => const ExplorePublishScreen())),
         ),
         _buildAccountListItem(
           context,

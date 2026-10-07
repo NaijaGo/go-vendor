@@ -8,6 +8,7 @@ import '../../services/socket_service.dart';
 import '../../services/explore_notification_intent.dart';
 import 'explore_comments_screen.dart';
 import '../vendor/add_product_screen.dart';
+import '../vendor/explore_publish_screen.dart';
 import '../vendor/orders_recived_screen.dart.dart';
 import 'account_screen.dart';
 import 'notifications_screen.dart';
@@ -112,6 +113,7 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
       dashboard,
       _isApprovedVendor ? const VendorMyProductsScreen() : dashboard,
       _isApprovedVendor ? const OrdersRecivedScreen() : dashboard,
+      _isApprovedVendor ? const ExplorePublishScreen(showAppBar: false) : dashboard,
       AccountScreen(onLogout: widget.onLogout),
     ];
   }
@@ -123,6 +125,8 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
       case 2:
         return 'Orders';
       case 3:
+        return 'Explore Videos';
+      case 4:
         return 'Account';
       default:
         return _isApprovedVendor ? 'Vendor Dashboard' : 'Vendor Access';
@@ -130,7 +134,7 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
   }
 
   void _onItemTapped(int index) {
-    if (!_isApprovedVendor && (index == 1 || index == 2)) {
+    if (!_isApprovedVendor && (index == 1 || index == 2 || index == 3)) {
       setState(() => _selectedIndex = 0);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -335,6 +339,11 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
               icon: Icon(Icons.receipt_long_outlined),
               activeIcon: Icon(Icons.receipt_long),
               label: 'Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.explore_outlined),
+              activeIcon: Icon(Icons.explore),
+              label: 'Explore',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),

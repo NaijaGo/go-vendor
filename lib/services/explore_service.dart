@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ExploreException implements Exception {
   const ExploreException(this.message);
@@ -70,5 +71,59 @@ class ExploreService {
 
   Future<Map<String, dynamic>> config() =>
       request('config', authenticated: false);
+
+  Future<Map<String, dynamic>> myVideos({int page = 1}) =>
+      request('videos/mine', query: {'page': '$page', 'limit': '20'});
+
+  Future<List<Map<String, dynamic>>> myProducts() async {
+    final token = await _tokenReader();
+    if (token == null || token.isEmpty) throw const ExploreException('Please sign in again.');
+    try {
+      final response = await _client.get(Uri.parse('$baseUrl/api/products/myproducts?limit=100'),
+        headers: {'Authorization': 'Bearer $token'}).timeout(const Duration(seconds: 30));
+      if (response.statusCode != 200) throw const ExploreException('Could not load your products. You can post without linking a product.');
+      final decoded = jsonDecode(response.body);
+      if (decoded is! List) throw const ExploreException('Product response is unavailable.');
+      return decoded.whereType<Map>().map((row) => Map<String, dynamic>.from(row))
+          .where((row) => row['isActive'] == true &&
+              (row['productStatus'] == null || row['productStatus'] == 'active') &&
+              (row['moderationStatus'] == null || row['moderationStatus'] == 'approved')).toList();
+    } on ExploreException { rethrow; }
+    catch (_) { throw const ExploreException('Could not load your products. You can post without linking a product.'); }
+  }
+
+  Future<Map<String, dynamic>> publishVideo(XFile file, String caption, {String? productId}) async {
+    if (caption.trim().isEmpty || caption.trim().length > 500) {
+      throw const ExploreException('Enter a caption of 1–500 characters.');
+    }
+    if (await file.length() > 90 * 1024 * 1024) throw const ExploreException('Compress this video to 90 MB or less before uploading.');
+    final token = await _tokenReader();
+    if (token == null || token.isEmpty) throw const ExploreException('Please sign in again.');
+    try {
+      final upload = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/explore/videos'))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..fields['caption'] = caption.trim();
+      if (productId != null) upload.fields['productId'] = productId;
+      upload.files.add(await http.MultipartFile.fromPath('video', file.path, filename: file.name));
+      final response = await _client.send(upload).then(http.Response.fromStream)
+          .timeout(const Duration(minutes: 4));
+      final decoded = jsonDecode(response.body);
+      if (response.statusCode != 201) {
+        final message = decoded is Map ? decoded['message'] : null;
+        throw ExploreException(response.statusCode < 500 && message is String
+            ? message : 'Video upload failed. Refresh My Videos before retrying.');
+      }
+      if (decoded is! Map || decoded['video'] is! Map) throw const ExploreException('Refresh My Videos to confirm your upload.');
+      return Map<String, dynamic>.from(decoded['video'] as Map);
+    } on ExploreException { rethrow; }
+    catch (_) { throw const ExploreException('Upload could not be confirmed. Refresh My Videos before retrying.'); }
+  }
+
+  Future<void> unpublishVideo(String id) async {
+    await request('videos/$id/unpublish', method: 'PATCH');
+  }
+  Future<void> deleteVideo(String id) async {
+    await request(id, method: 'DELETE');
+  }
   void dispose() => _client.close();
 }

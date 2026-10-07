@@ -465,9 +465,13 @@ class ProductService {
 
   Future<List<Product>> searchProducts(String query) => _fetchProducts(
     '/api/products/search?q=${Uri.encodeQueryComponent(query)}&limit=50',
+    paginatedSearchResult: true,
   );
 
-  Future<List<Product>> _fetchProducts(String endpoint) async {
+  Future<List<Product>> _fetchProducts(
+    String endpoint, {
+    bool paginatedSearchResult = false,
+  }) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('jwt_token');
 
@@ -481,11 +485,25 @@ class ProductService {
       headers: headers,
     );
 
-    debugPrint('API Response for $endpoint: ${response.statusCode}');
-    debugPrint('API Response Body: ${response.body}');
+    if (!paginatedSearchResult) {
+      debugPrint('API Response for $endpoint: ${response.statusCode}');
+      debugPrint('API Response Body: ${response.body}');
+    }
 
     if (response.statusCode == 200) {
-      final jsonList = await decodeJsonListInBackground(response.body);
+      List<dynamic> jsonList;
+      if (paginatedSearchResult) {
+        final dynamic decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          jsonList = decoded;
+        } else if (decoded is Map && decoded['products'] is List) {
+          jsonList = decoded['products'] as List<dynamic>;
+        } else {
+          throw const FormatException('Invalid catalog search response.');
+        }
+      } else {
+        jsonList = await decodeJsonListInBackground(response.body);
+      }
       return jsonList.map((json) => Product.fromJson(json)).toList();
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Please log in again.');
