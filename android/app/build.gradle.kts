@@ -32,7 +32,7 @@ android {
     defaultConfig {
         applicationId = "com.naijago.govendor"
         // mobile_scanner 7.x (ML Kit barcode) needs at least API 23
-        minSdk = 23
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

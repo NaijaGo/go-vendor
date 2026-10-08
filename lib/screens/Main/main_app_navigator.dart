@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:ionicons/ionicons.dart';
 import 'package:naijagovendorsapp/auth/screens/login_screen.dart';
 import 'package:naijagovendorsapp/providers/cart_provider.dart';
 import 'package:naijagovendorsapp/screens/Main/notifications_screen.dart';
@@ -91,7 +90,7 @@ class GuestPlaceholderScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Icon(
-                      Ionicons.lock_closed_outline,
+                      Icons.lock_outline,
                       color: Colors.white,
                       size: 34,
                     ),
@@ -156,7 +155,7 @@ class GuestPlaceholderScreen extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: onLoginTapped,
-                      icon: const Icon(Ionicons.log_in_outline),
+                      icon: const Icon(Icons.login),
                       label: const Text(
                         'Log in / Register',
                         style: TextStyle(
@@ -785,7 +784,7 @@ class _MainAppNavigatorState extends State<MainAppNavigator>
           children: [
             IconButton(
               icon: const Icon(
-                Ionicons.cart_outline,
+                Icons.shopping_cart_outlined,
                 color: AppUi.secondaryBlack,
               ),
               onPressed: () => _onItemTapped(1),
@@ -907,28 +906,28 @@ class _MainAppNavigatorState extends State<MainAppNavigator>
           ),
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.home_outline),
-              activeIcon: Icon(Ionicons.home),
+              icon: Icon(Icons.home_outlined),
+              activeIcon: Icon(Icons.home),
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.cart_outline),
-              activeIcon: Icon(Ionicons.cart),
+              icon: Icon(Icons.shopping_cart_outlined),
+              activeIcon: Icon(Icons.shopping_cart),
               label: 'Cart',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.grid_outline),
-              activeIcon: Icon(Ionicons.grid),
+              icon: Icon(Icons.grid_view_outlined),
+              activeIcon: Icon(Icons.grid_view),
               label: 'Categories',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.storefront_outline),
-              activeIcon: Icon(Ionicons.storefront),
+              icon: Icon(Icons.storefront_outlined),
+              activeIcon: Icon(Icons.storefront),
               label: 'Vendor',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Ionicons.person_outline),
-              activeIcon: Icon(Ionicons.person),
+              icon: Icon(Icons.person_outline),
+              activeIcon: Icon(Icons.person),
               label: 'Account',
             ),
           ],

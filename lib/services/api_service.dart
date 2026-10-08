@@ -48,6 +48,18 @@ class ApiService {
     );
   }
 
+  static Future<http.Response> patch(String path, Map body) async {
+    final token = await _getToken();
+    return http.patch(
+      Uri.parse('$baseUrl$path'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(body),
+    );
+  }
+
   // ---- Upload (Cloudinary/S3 via backend) ----
   static Future<String> uploadFileToBackend(
     String filePath, {

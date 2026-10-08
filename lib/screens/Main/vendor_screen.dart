@@ -11,6 +11,7 @@ import '../../vendor/screens/vendor_registration_screen.dart';
 import 'pharmacist_dashboard.dart';
 import 'vendor_desist_confirmation_screen.dart';
 import 'vendor_my_products_screen.dart';
+import '../vendor/vendor_deals_screen.dart';
 
 // Defined custom colors for consistency
 const Color deepNavyBlue = Color(0xFF03024C);
@@ -695,6 +696,17 @@ class _VendorScreenState extends State<VendorScreen>
                   title: 'My products',
                   subtitle: 'Update stock and pricing',
                   onTap: _openMyProducts,
+                ),
+              ),
+              SizedBox(
+                width: tileWidth,
+                child: _buildActionTile(
+                  icon: Icons.local_offer_outlined,
+                  title: 'NaijaGo Deals',
+                  subtitle: 'Create timed offers for review',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const VendorDealsScreen()),
+                  ),
                 ),
               ),
               SizedBox(
