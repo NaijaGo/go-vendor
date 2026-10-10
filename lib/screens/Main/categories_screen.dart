@@ -236,6 +236,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       'Lighting Equipment',
       'Camera Bags & Cases',
       'Tripods & Supports',
+      'Content Creator Equipment',
     ],
     'Food & Beverage': [
       'Restaurant Equipment',
@@ -473,6 +474,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     'Lighting Equipment': 'assets/categories/lightning.jpg',
     'Camera Bags & Cases': 'assets/categories/camera_bags.jpg',
     'Tripods & Supports': 'assets/categories/tripod_supports.jpg',
+    'Content Creator Equipment': 'assets/categories/tripod_supports.jpg',
     'Restaurant Equipment': 'assets/categories/restuarant_equipment.jpg',
     'Catering Supplies': 'assets/categories/catering_supplies.jpg',
     'Baking Supplies': 'assets/categories/baking_supplies.jpg',

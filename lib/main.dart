@@ -1,3 +1,4 @@
+import 'services/google_auth_service.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -141,6 +142,7 @@ class _VendorSessionGateState extends State<VendorSessionGate> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
+    await GoogleAuthService.signOut();
     await OneSignalService.logout();
     if (!mounted) return;
     setState(() {

@@ -255,6 +255,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       'Lighting Equipment',
       'Camera Bags & Cases',
       'Tripods & Supports',
+      'Content Creator Equipment',
     ],
     'Food & Beverage': [
       'Restaurant Equipment',
@@ -2813,11 +2814,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               const SizedBox(height: 20),
 
                               // Flash Sale Checkbox
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: VendorUi.whiteBackground,
+                              Material(
+                                color: VendorUi.whiteBackground,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
+                                  side: const BorderSide(
                                     color: VendorUi.border,
                                     width: 1.0,
                                   ),

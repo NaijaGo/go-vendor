@@ -6,6 +6,8 @@ workflows:
     environment:
       flutter: 3.38.5
       vars:
+        GOOGLE_SERVER_CLIENT_ID: "878060644963-ujmbu0ka7g3rh07muknotij2lbsaq4oh.apps.googleusercontent.com"
+        GOOGLE_IOS_CLIENT_ID: "878060644963-1m0q9ou6b8c9lskvvrh31q2s142j1pgb.apps.googleusercontent.com"
         PACKAGE_NAME: "com.naijago.govendor"
         API_BASE_URL: "https://naijago-backend.onrender.com"
         ONESIGNAL_APP_ID: "76438b8d-4b39-49eb-805c-11eb934f5a66"
@@ -48,9 +50,13 @@ workflows:
         script: |
           flutter build apk --release --android-skip-build-dependency-validation \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID:-}" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="${GOOGLE_IOS_CLIENT_ID:-}" \
             --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
           flutter build appbundle --release --android-skip-build-dependency-validation \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID:-}" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="${GOOGLE_IOS_CLIENT_ID:-}" \
             --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
@@ -65,6 +71,8 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
+        GOOGLE_SERVER_CLIENT_ID: "878060644963-ujmbu0ka7g3rh07muknotij2lbsaq4oh.apps.googleusercontent.com"
+        GOOGLE_IOS_CLIENT_ID: "878060644963-1m0q9ou6b8c9lskvvrh31q2s142j1pgb.apps.googleusercontent.com"
         API_BASE_URL: "https://naijago-backend.onrender.com"
         ONESIGNAL_APP_ID: "76438b8d-4b39-49eb-805c-11eb934f5a66"
     cache:
@@ -89,8 +97,11 @@ workflows:
           flutter test
       - name: Build iOS without codesigning
         script: |
+          dart run tool/configure_google_sign_in.dart
           flutter build ios --release --no-codesign \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=GOOGLE_SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID:-}" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="${GOOGLE_IOS_CLIENT_ID:-}" \
             --dart-define=ONESIGNAL_APP_ID="$ONESIGNAL_APP_ID"
     artifacts:
       - build/ios/iphoneos/*.app

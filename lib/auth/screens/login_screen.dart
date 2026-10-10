@@ -10,6 +10,7 @@ import '../../services/onesignal_service.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_tokens.dart';
 import '../../widgets/tech_glow_background.dart';
+import 'google_login_screen.dart';
 import 'forgot_password_screen.dart';
 import 'registration_screen.dart';
 
@@ -132,50 +133,13 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       if (response.statusCode == 200) {
-        final String token = responseData['token'] as String;
-        final Map<String, dynamic> userData = Map<String, dynamic>.from(
-          responseData['user'] as Map,
+        await _acceptLogin(
+          responseData,
+          email: email,
+          password: password,
+          deviceFingerprint: deviceFingerprint,
+          oneSignalPlayerId: oneSignalPlayerId,
         );
-        final String userId = (userData['id'] ?? userData['_id'] ?? '')
-            .toString();
-        final String userEmail = (userData['email'] ?? email).toString();
-        final String vendorStatus = (userData['vendorStatus'] ?? 'none')
-            .toString();
-        final String pharmacistStatus = (userData['pharmacistStatus'] ?? 'none')
-            .toString();
-        final bool isVendor = userData['isVendor'] == true;
-        final String businessName = (userData['businessName'] ?? '').toString();
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('jwt_token', token);
-        await prefs.setString('device_fingerprint', deviceFingerprint);
-        await prefs.setString('user', json.encode(userData));
-        await prefs.setString('user_email', userEmail);
-
-        if (oneSignalPlayerId != null) {
-          await prefs.setString('oneSignal_player_id', oneSignalPlayerId);
-        }
-
-        if (userId.isNotEmpty) {
-          try {
-            await OneSignalService.loginVendor(
-              userId: userId,
-              email: userEmail,
-              vendorStatus: vendorStatus,
-              isVendor: isVendor,
-              businessName: businessName,
-              pharmacistStatus: pharmacistStatus,
-            );
-          } catch (e) {
-            debugPrint('Error linking OneSignal: $e');
-          }
-        }
-
-        if (!mounted) {
-          return;
-        }
-        _showSnack(responseData['message']?.toString() ?? 'Login successful!');
-        widget.onLoginSuccess();
       } else if (response.statusCode == 403 &&
           responseData['message'] ==
               'New device detected. Please check your email to verify this device.') {
@@ -201,6 +165,96 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<void> _acceptLogin(
+    Map<String, dynamic> responseData, {
+    required String email,
+    required String deviceFingerprint,
+    String? password,
+    String? oneSignalPlayerId,
+  }) async {
+    final String token = responseData['token'] as String;
+    final Map<String, dynamic> userData = Map<String, dynamic>.from(
+      responseData['user'] as Map,
+    );
+    final String userId = (userData['id'] ?? userData['_id'] ?? '').toString();
+    final String userEmail = (userData['email'] ?? email).toString();
+    final String vendorStatus = (userData['vendorStatus'] ?? 'none').toString();
+    final String pharmacistStatus = (userData['pharmacistStatus'] ?? 'none')
+        .toString();
+    final bool isVendor = userData['isVendor'] == true;
+    final String businessName = (userData['businessName'] ?? '').toString();
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('jwt_token', token);
+    await prefs.setString('device_fingerprint', deviceFingerprint);
+    await prefs.setString('user', json.encode(userData));
+    await prefs.setString('user_email', userEmail);
+
+    if (oneSignalPlayerId != null) {
+      await prefs.setString('oneSignal_player_id', oneSignalPlayerId);
+    }
+
+    if (userId.isNotEmpty) {
+      try {
+        await OneSignalService.loginVendor(
+          userId: userId,
+          email: userEmail,
+          vendorStatus: vendorStatus,
+          isVendor: isVendor,
+          businessName: businessName,
+          pharmacistStatus: pharmacistStatus,
+        );
+      } catch (e) {
+        debugPrint('Error linking OneSignal: $e');
+      }
+    }
+
+    if (!mounted) {
+      return;
+    }
+    _showSnack(responseData['message']?.toString() ?? 'Login successful!');
+    widget.onLoginSuccess();
+  }
+
+  Future<void> _loginGoogle() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+    try {
+      final fingerprint = await _getDeviceFingerprint();
+      final pushId = await _getOneSignalPlayerId();
+      if (!mounted) return;
+      final result = await Navigator.of(context).push<Map<String, dynamic>>(
+        MaterialPageRoute(
+          builder: (_) => GoogleLoginScreen(
+            app: 'vendor',
+            deviceFingerprint: fingerprint,
+            oneSignalPlayerId: pushId,
+          ),
+        ),
+      );
+      if (!mounted || result == null) return;
+      final user = result['user'] as Map;
+      await _acceptLogin(
+        result,
+        email: user['email'].toString(),
+        deviceFingerprint: fingerprint,
+        oneSignalPlayerId: pushId,
+      );
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () =>
+              _errorMessage = 'Unable to sign in right now. Please try again.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -492,6 +546,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ],
                                   const SizedBox(height: 18),
+                                  OutlinedButton(
+                                    onPressed: _isLoading ? null : _loginGoogle,
+                                    child: const Text('Continue with Google'),
+                                  ),
+                                  const SizedBox(height: 16),
                                   SizedBox(
                                     height: 52,
                                     child: ElevatedButton(
