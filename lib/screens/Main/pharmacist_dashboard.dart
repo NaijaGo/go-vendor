@@ -22,7 +22,14 @@ Future<String?> _getPharmacistAuthToken() async {
 }
 
 class PharmacistDashboard extends StatefulWidget {
-  const PharmacistDashboard({super.key});
+  final io.Socket Function(String apiUrl, String token)? socketFactory;
+  final io.Socket? Function(String apiUrl, String token)?
+  conversationSocketFactory;
+  const PharmacistDashboard({
+    super.key,
+    this.socketFactory,
+    this.conversationSocketFactory,
+  });
 
   @override
   State<PharmacistDashboard> createState() => _PharmacistDashboardState();
@@ -57,6 +64,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     }
 
     final token = await _getPharmacistAuthToken();
+    if (!mounted) return;
     if (token == null) {
       if (!mounted) return;
       setState(() {
@@ -73,6 +81,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     }
 
     final canUsePharmacistTools = await _verifyPharmacistAccess(token);
+    if (!mounted) return;
     if (!canUsePharmacistTools) {
       if (!mounted) return;
       setState(() {
@@ -90,6 +99,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
 
     if (mounted) {
       final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
       setState(() {
         _hasPharmacistAccess = true;
         _isOnline = prefs.getBool(_pharmacistOnlinePreferenceKey) ?? false;
@@ -100,16 +110,17 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     );
 
     _socket?.dispose();
-    _socket = io.io(
-      _apiUrl,
-      io.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
-          .disableAutoConnect()
-          .setAuth({'token': token})
-          .build(),
-    );
-
-    _socket!.connect();
+    _socket = widget.socketFactory != null
+        ? widget.socketFactory!(_apiUrl, token)
+        : io.io(
+            _apiUrl,
+            io.OptionBuilder()
+                .setTransports(['websocket', 'polling'])
+                .disableAutoConnect()
+                .enableForceNew()
+                .setAuth({'token': token})
+                .build(),
+          );
 
     _socket!.onConnect((_) {
       if (!mounted) return;
@@ -122,7 +133,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     });
 
     _socket!.on('incoming_chat_request', (data) {
-      if (!_isOnline) return;
+      if (!_isOnline || data is! Map) return;
       _upsertIncomingRequest(data);
 
       _showNotification(
@@ -182,6 +193,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
         _isConnecting = false;
       });
     });
+    _socket!.connect();
   }
 
   Map<String, dynamic> _ackPayload(dynamic response) {
@@ -282,6 +294,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     final request = {
       'sessionId': sessionId,
       'userId': (data['userId'] ?? '').toString(),
+      'assignedToMe': data['assignedToMe'] == true,
       'textPreview': (data['textPreview'] ?? 'No preview available.')
           .toString(),
       'createdAt': data['createdAt'] != null
@@ -322,6 +335,7 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                   return {
                     'sessionId': (item['sessionId'] ?? '').toString(),
                     'userId': (item['userId'] ?? '').toString(),
+                    'assignedToMe': item['assignedToMe'] == true,
                     'textPreview':
                         (item['textPreview'] ?? 'No preview available.')
                             .toString(),
@@ -469,13 +483,17 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     }
   }
 
-  void _openClaimedChat(String sessionId) {
-    Navigator.of(context).push(
+  Future<void> _openClaimedChat(String sessionId) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            ChatScreen(sessionId: sessionId, isPharmacistView: true),
+        builder: (_) => ChatScreen(
+          sessionId: sessionId,
+          isPharmacistView: true,
+          socketFactory: widget.conversationSocketFactory,
+        ),
       ),
     );
+    if (mounted) await _refreshDashboard();
   }
 
   void _showNotification(String title, String message, {bool isError = false}) {
@@ -703,33 +721,9 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
               ),
               const SizedBox(height: 20),
               PharmacyPanel(
-                title: 'Online pharmacists',
+                title: 'Customer conversations',
                 subtitle:
-                    'Approved pharmacists currently available for live consultation assignment.',
-                child: _onlinePharmacists.isEmpty
-                    ? const Text(
-                        'No pharmacist is online right now.',
-                        style: TextStyle(color: PharmacyUi.mutedText),
-                      )
-                    : Column(
-                        children: [
-                          for (
-                            var i = 0;
-                            i < _onlinePharmacists.length;
-                            i++
-                          ) ...[
-                            _buildOnlinePharmacistTile(_onlinePharmacists[i]),
-                            if (i != _onlinePharmacists.length - 1)
-                              const Divider(height: 18),
-                          ],
-                        ],
-                      ),
-              ),
-              const SizedBox(height: 20),
-              PharmacyPanel(
-                title: 'Pending consultation requests',
-                subtitle:
-                    'New pharmacy support sessions appear here the moment they are escalated.',
+                    'Open your conversations or claim a new consultation.',
                 child: _incomingRequests.isEmpty
                     ? Column(
                         children: [
@@ -768,6 +762,30 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                             _buildRequestCard(_incomingRequests[i]),
                             if (i != _incomingRequests.length - 1)
                               const SizedBox(height: 12),
+                          ],
+                        ],
+                      ),
+              ),
+              const SizedBox(height: 20),
+              PharmacyPanel(
+                title: 'Online pharmacists',
+                subtitle:
+                    'Approved pharmacists currently available for live consultation assignment.',
+                child: _onlinePharmacists.isEmpty
+                    ? const Text(
+                        'No pharmacist is online right now.',
+                        style: TextStyle(color: PharmacyUi.mutedText),
+                      )
+                    : Column(
+                        children: [
+                          for (
+                            var i = 0;
+                            i < _onlinePharmacists.length;
+                            i++
+                          ) ...[
+                            _buildOnlinePharmacistTile(_onlinePharmacists[i]),
+                            if (i != _onlinePharmacists.length - 1)
+                              const Divider(height: 18),
                           ],
                         ],
                       ),
@@ -865,13 +883,11 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
     final createdAt = request['createdAt'] as DateTime? ?? DateTime.now();
     final sessionId = (request['sessionId'] as String?) ?? '';
     final isClaiming = _claimingSessionIds.contains(sessionId);
+    final assignedToMe = request['assignedToMe'] == true;
 
     final shortUserId = userId.length > 8
         ? '${userId.substring(0, 8)}...'
         : userId;
-    final shortSessionId = sessionId.length > 8
-        ? '${sessionId.substring(0, 8)}...'
-        : sessionId;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -915,7 +931,9 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Session $shortSessionId',
+                      assignedToMe
+                          ? 'Your consultation'
+                          : 'Waiting for a pharmacist',
                       style: const TextStyle(
                         color: PharmacyUi.mutedText,
                         fontSize: 12,
@@ -966,7 +984,11 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton.icon(
-                  onPressed: isClaiming ? null : () => _claimSession(sessionId),
+                  onPressed: isClaiming
+                      ? null
+                      : () => assignedToMe
+                            ? _openClaimedChat(sessionId)
+                            : _claimSession(sessionId),
                   icon: isClaiming
                       ? const SizedBox(
                           height: 18,
@@ -974,7 +996,13 @@ class _PharmacistDashboardState extends State<PharmacistDashboard> {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.medical_services_outlined),
-                  label: Text(isClaiming ? 'Opening...' : 'Claim'),
+                  label: Text(
+                    isClaiming
+                        ? 'Opening...'
+                        : assignedToMe
+                        ? 'Open'
+                        : 'Claim',
+                  ),
                 ),
               ),
             ],
