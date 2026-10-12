@@ -1,3 +1,6 @@
+import '../../models/catalog_category.dart';
+import '../../services/catalog_category_service.dart';
+import '../../services/product_image_analysis_service.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -15,8 +18,15 @@ import '../../models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Product? initialProduct;
+  final ProductImageAnalysisService? imageAnalysisService;
+  final Future<File?> Function()? pickMainImage;
 
-  const AddProductScreen({super.key, this.initialProduct});
+  const AddProductScreen({
+    super.key,
+    this.initialProduct,
+    this.imageAnalysisService,
+    this.pickMainImage,
+  });
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -24,6 +34,14 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _specificationsController = TextEditingController();
+  bool _autoAnalyze = true,
+      _analysisBusy = false,
+      _analysisApplied = false,
+      _analysisReviewed = false;
+  int _analysisSequence = 0, _attributeRevision = 0;
+  ProductImageSuggestion? _imageSuggestion;
+  String _analysisStatus = '';
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -44,229 +62,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   // FULL CATEGORIES MAP
-  final Map<String, List<String>> _allCategories = {
-    'Home & Office': [
-      'Appliances',
-      'Home & Kitchen',
-      'Home Interior & Exterior',
-      'Office Products',
-      'Furniture',
-      'Lighting',
-      'Home Security',
-      'Cleaning Supplies',
-      'Storage & Organization',
-      'Garden & Outdoor',
-      'Bedding & Bath',
-    ],
-    'Phones & Tablets': [
-      'Mobile Phones',
-      'Tablets',
-      'Mobile Phone Accessories',
-      'Wearable Technology',
-      'Smartphones',
-      'Feature Phones',
-      'Phone Cases & Covers',
-      'Screen Protectors',
-      'Chargers & Cables',
-      'Power Banks',
-      'Bluetooth Accessories',
-    ],
-    'Fashion': [
-      "Men's Fashion",
-      "Women's Fashion",
-      "Kids' Fashion",
-      'Watches',
-      'Luggages & Travel Gear',
-      'Hair & Wigs',
-      'Footwear',
-      'Bags & Purses',
-      'Jewelry',
-      'Eyewear',
-      'Belts & Accessories',
-      'Traditional Attire',
-      'Underwear & Lingerie',
-      'Sportswear',
-    ],
-    'Cosmetics & Beauty': [
-      'Make Up',
-      'Fragrance',
-      'Hair Care',
-      'Oral Care',
-      'Medicine',
-      'Condoms',
-      'Sex Toys',
-      'Skin Care & Cosmetics',
-      'Personal Care',
-      'Shaving & Hair Removal',
-      'Vitamins & Supplements',
-      'First Aid',
-      'Medical Equipment',
-      'Feminine Care',
-    ],
-    'Electronics': [
-      'Television & Video',
-      'Camera & Photo',
-      'Generator & Portable Power',
-      'Audios',
-      'Home Theater Systems',
-      'Headphones & Earbuds',
-      'Gadgets',
-      'Drones',
-      'Smart Home Devices',
-      'Car Electronics',
-      'Batteries & Power',
-    ],
-    'Computing': [
-      'Computers',
-      'Data Storage',
-      'Anti Virus & Security',
-      'Printers & Computer Accessories',
-      'Keyboards & Mice',
-    ],
-    'Groceries': [
-      'Beer, Wine & Spirits',
-      'Food Cupboard',
-      'House Hold Cleaning',
-      'Fresh Produce',
-      'Dairy & Eggs',
-      'Seafood',
-    ],
-    'Restaurant': [
-      'Meals',
-      'Fast Food',
-      'Local Dishes',
-      'Pastries',
-      'Drinks',
-      'Catering',
-    ],
-    'Automobiles': [
-      'Car Care',
-      'Car Exterior and Interior Accessories',
-      'Tools & Equipment',
-      'Oils & Fluids',
-      'Car Safety',
-      'Performance Parts',
-    ],
-    'Sporting Goods': [
-      'Cardio Training',
-      'Strength & Training Equipment',
-      'Team Sports',
-      'Outdoor & Adventures',
-      'Fitness Trackers',
-      'Yoga & Pilates',
-      'Swimming',
-      'Cycling',
-      'Camping & Hiking',
-      'Golf',
-      'Martial Arts',
-    ],
-    'Gaming': [
-      'Play Station',
-      'Xbox',
-      'Nintendo',
-      'PC Gaming',
-      'Gaming Consoles',
-      'Video Games',
-      'Gaming Accessories',
-      'VR Headsets',
-      'Arcade Games',
-      'Board Games',
-      'Card Games',
-      'Puzzles',
-    ],
-    'Baby Products': [
-      'Apparels & Accessories',
-      'Diapering',
-      'Feeding',
-      'Baby Toddlers Toys',
-      'Gears',
-      'Bathing & Skin Care',
-      'Potty Training',
-      'Safety',
-      'Nursery Furniture',
-      'Strollers & Prams',
-      'Car Seats',
-      'Educational Toys',
-    ],
-    'Books & Stationery': [
-      'Fiction Books',
-      'Comics',
-      'Technology',
-      'Business',
-      'Story',
-      'Religious',
-      'Non-Fiction',
-      'Academic Textbooks',
-      'Children Books',
-      'Magazines',
-      'Writing Instruments',
-      'Office Supplies',
-      'Art Supplies',
-      'Calendars & Planners',
-    ],
-    'Animal Products': [
-      'Chicken Feeds',
-      'Dog Feeds',
-      'Cat Feeds',
-      'Fish Feeds',
-      'Pig Feeds',
-      'Pet Accessories',
-      'Pet Health & Care',
-      'Pet Toys',
-      'Pet Clothing',
-      'Pet Grooming',
-      'Aquarium Supplies',
-      'Bird Supplies',
-    ],
-    'Building & Construction': [
-      'Building Materials',
-      'Electrical',
-      'Plumbing',
-      'Tools & Machinery',
-      'Safety Equipment',
-      'Paints & Coatings',
-      'Hardware',
-    ],
-    'Industrial & Scientific': [
-      'Lab Equipment',
-      'Packaging & Shipping',
-      'Janitorial & Sanitation',
-    ],
-    'Music & Instruments': [
-      'Guitars',
-      'Keyboards & Pianos',
-      'Wind Instruments',
-      'Audio Equipment',
-    ],
-    'Arts & Crafts': ['Painting', 'Beading & Jewelry Making', 'Clay & Pottery'],
-    'Agriculture': ['Fertilizers', 'Pesticides'],
-    'Jewelry & Watches': ['Fine Jewelry', 'Fashion Jewelry', 'Wrist Watches'],
-    'Toys & Games': [
-      'Dolls',
-      'Educational Toys',
-      'Outdoor Toys',
-      'Remote Control Toys',
-      'Stuffed Animals',
-      'Toy Vehicles',
-    ],
-    'Photography': [
-      'Cameras',
-      'Lenses',
-      'Lighting Equipment',
-      'Camera Bags & Cases',
-      'Tripods & Supports',
-      'Content Creator Equipment',
-    ],
-    'Food & Beverage': [
-      'Restaurant Equipment',
-      'Catering Supplies',
-      'Baking Supplies',
-      'Food Processing',
-      'Beverage Equipment',
-      'Kitchen Utensils',
-      'Food Packaging',
-    ],
-  };
+  Map<String, List<String>> _allCategories = {};
+  CatalogHierarchy? _catalogHierarchy;
+  String? _initialCategorySelection;
 
   // NEW: Categories that REQUIRE size selection
   final Set<String> _sizeRequiredCategories = {
@@ -351,6 +149,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
     // Initialize with one custom size
     _customSizes.add(_customSize);
     _prefillProductForEditing();
+    CatalogCategoryService.load(
+      onReady: (hierarchy) {
+        if (!mounted) return;
+        _catalogHierarchy = hierarchy;
+        _allCategories = hierarchy.categoryMap();
+        _onSearchChanged();
+      },
+    );
     _loadPharmacistStatus();
   }
 
@@ -364,7 +170,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _descriptionController.text = product.description;
     _priceController.text = product.price.toStringAsFixed(2);
     _stockQuantityController.text = product.stockQuantity.toString();
-    _selectedCategory = product.category;
+    _selectedCategory =
+        product.category.contains('>') || product.subcategory.isEmpty
+        ? product.category
+        : '${product.category} > ${product.subcategory}';
+    _initialCategorySelection = _selectedCategory;
     _restaurantNameController.text = product.restaurantName ?? '';
     _foodInformationController.text = product.foodInformation ?? '';
     _productLocationAddressController.text =
@@ -396,6 +206,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   @override
   void dispose() {
+    _analysisSequence++;
+    _specificationsController.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
     _priceController.dispose();
@@ -440,7 +252,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   void _applyPharmacistStatus(Map<String, dynamic> userData) {
-    final isPharmacist = userData['isPharmacist'] == true;
+    final isPharmacist =
+        userData['isPharmacist'] == true || userData['role'] == 'pharmacist';
     final pharmacistStatus =
         (userData['pharmacistStatus'] ?? (isPharmacist ? 'approved' : 'none'))
             .toString()
@@ -448,28 +261,44 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     if (!mounted) return;
     setState(() {
-      _isApprovedPharmacist = isPharmacist || pharmacistStatus == 'approved';
+      _isApprovedPharmacist =
+          userData['isVendor'] == true &&
+          userData['vendorStatus'] == 'approved' &&
+          isPharmacist &&
+          (pharmacistStatus == 'none' || pharmacistStatus == 'approved');
     });
   }
 
   bool _isMedicineCategory(String? category) {
-    final normalized = category?.toLowerCase() ?? '';
+    // An unrelated edit must keep saved prescription/approval evidence visible.
+    if (widget.initialProduct?.isMedicine == true) return true;
+    final originalChild = category == _initialCategorySelection
+        ? widget.initialProduct?.subcategory ?? ''
+        : '';
+    final normalized = '${category ?? ''} > $originalChild'.toLowerCase();
     return normalized.contains('medicine') ||
         normalized.contains('pharmacy') ||
         normalized.contains('drug');
   }
 
   bool _isRestaurantCategory(String? category) {
-    final normalized = category?.toLowerCase() ?? '';
-    if (normalized.contains('restaurant equipment')) return false;
-    return normalized == 'restaurant' ||
-        normalized.startsWith('restaurant >') ||
-        normalized.contains('meal') ||
-        normalized.contains('fast food') ||
-        normalized.contains('local dishes') ||
-        normalized.contains('pastries') ||
-        normalized.contains('drinks') ||
-        normalized.contains('catering');
+    final originalChild = category == _initialCategorySelection
+        ? widget.initialProduct?.subcategory ?? ''
+        : '';
+    if (widget.initialProduct?.isRestaurantItem == true) return true;
+    return [category ?? '', originalChild]
+        .expand((value) => value.toLowerCase().split('>'))
+        .map((value) => value.trim())
+        .any(
+          (value) =>
+              value == 'restaurant' ||
+              value.contains('meal') ||
+              value.contains('fast food') ||
+              value.contains('local dishes') ||
+              value.contains('pastries') ||
+              value.contains('drinks') ||
+              value.contains('catering'),
+        );
   }
 
   String _formatTimeOfDay(TimeOfDay value) {
@@ -1328,6 +1157,19 @@ class _AddProductScreenState extends State<AddProductScreen> {
   // Enhanced category dropdown items
   List<DropdownMenuItem<String>> _buildCategoryItems() {
     List<DropdownMenuItem<String>> items = [];
+    final selected = _selectedCategory;
+    if (selected != null &&
+        !_filteredCategories.any(
+          (entry) =>
+              entry.value.any((child) => '${entry.key} > $child' == selected),
+        )) {
+      items.add(
+        DropdownMenuItem(
+          value: selected,
+          child: Text(selected, overflow: TextOverflow.ellipsis),
+        ),
+      );
+    }
 
     items.add(
       DropdownMenuItem<String>(
@@ -1756,20 +1598,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
               },
             ),
             if (!_isOverTheCounter)
-              CheckboxListTile(
-                value: _requiresPrescription,
-                onChanged: (value) {
-                  setState(() {
-                    _requiresPrescription = value ?? false;
-                    _requiresPharmacistApproval = true;
-                  });
-                },
-                activeColor: VendorUi.deepNavyBlue,
-                title: const Text('Prescription required'),
-                subtitle: const Text(
-                  'Mark this when a pharmacist should verify prescription status.',
+              Material(
+                type: MaterialType.transparency,
+                child: CheckboxListTile(
+                  value: _requiresPrescription,
+                  onChanged: (value) {
+                    setState(() {
+                      _requiresPrescription = value ?? false;
+                      _requiresPharmacistApproval = true;
+                    });
+                  },
+                  activeColor: VendorUi.deepNavyBlue,
+                  title: const Text('Prescription required'),
+                  subtitle: const Text(
+                    'Mark this when a pharmacist should verify prescription status.',
+                  ),
+                  contentPadding: EdgeInsets.zero,
                 ),
-                contentPadding: EdgeInsets.zero,
               ),
           ],
         ],
@@ -2139,6 +1984,168 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
+  Map<String, String> _analysisSnapshot() => {
+    'name': _nameController.text,
+    'description': _descriptionController.text,
+    'brand': _searchDetails['brand'] ?? '',
+    'searchTags': _searchDetails['searchTags'] ?? '',
+    'specifications': _specificationsController.text,
+    'category': _selectedCategory ?? '',
+  };
+
+  void _applyImageSuggestion(
+    Map<String, String> snapshot, {
+    bool explicit = false,
+  }) {
+    final current = _analysisSnapshot();
+    final changes = _imageSuggestion!.fieldsFor(
+      current,
+      explicit ? current : snapshot,
+      _catalogHierarchy,
+      editing: _isEditing && !explicit,
+    );
+    setState(() {
+      if (changes.containsKey('name')) _nameController.text = changes['name']!;
+      if (changes.containsKey('description')) {
+        _descriptionController.text = changes['description']!;
+      }
+      if (changes.containsKey('specifications')) {
+        _specificationsController.text = changes['specifications']!;
+      }
+      for (final key in ['brand', 'searchTags']) {
+        if (changes.containsKey(key)) _searchDetails[key] = changes[key]!;
+      }
+      if (changes.containsKey('category')) {
+        _selectedCategory = changes['category'];
+      }
+      if (changes.isNotEmpty) {
+        _analysisApplied = true;
+        _analysisReviewed = false;
+        _attributeRevision++;
+      }
+    });
+    if (changes.containsKey('category')) {
+      _checkSizeRequirements(_selectedCategory);
+    }
+  }
+
+  Future<void> _analyzeMainPhoto(File image) async {
+    final sequence = ++_analysisSequence, snapshot = _analysisSnapshot();
+    setState(() {
+      _analysisBusy = true;
+      _imageSuggestion = null;
+      _analysisStatus = 'Analyzing the product photo…';
+      _analysisReviewed = false;
+    });
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+      if (token == null) {
+        throw const FormatException(
+          'Sign in to use AI suggestions. You can still fill the form manually.',
+        );
+      }
+      final result =
+          await (widget.imageAnalysisService ?? ProductImageAnalysisService())
+              .analyze(image, token);
+      if (!mounted || sequence != _analysisSequence) return;
+      setState(() {
+        _imageSuggestion = result;
+        _analysisStatus =
+            'Suggestions ready. Check each detail and category before saving.';
+      });
+      _applyImageSuggestion(snapshot);
+    } catch (error) {
+      if (mounted && sequence == _analysisSequence) {
+        setState(
+          () => _analysisStatus = error is FormatException
+              ? error.message
+              : 'Analysis could not finish. Enter details manually or try later.',
+        );
+      }
+    } finally {
+      if (mounted && sequence == _analysisSequence) {
+        setState(() => _analysisBusy = false);
+      }
+    }
+  }
+
+  Widget _buildImageAnalysis() => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'AI photo suggestions',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+          ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Suggest details when I select a main photo'),
+            subtitle: const Text(
+              'The photo is sent to Gemini. Price, stock and publication stay under your control.',
+            ),
+            value: _autoAnalyze,
+            onChanged: (value) => setState(() {
+              _autoAnalyze = value;
+              if (!value) {
+                _analysisSequence++;
+                _analysisBusy = false;
+              }
+            }),
+          ),
+          if (_analysisBusy) const LinearProgressIndicator(),
+          if (_analysisStatus.isNotEmpty) Text(_analysisStatus),
+          if (_imageSuggestion != null) ...[
+            for (final warning in _imageSuggestion!.warnings)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(warning),
+              ),
+            ExpansionTile(
+              title: const Text('Review suggested details'),
+              children: [
+                SelectableText(
+                  const JsonEncoder.withIndent('  ').convert({
+                    'suggestions': _imageSuggestion!.data['suggestions'],
+                    'classification': _imageSuggestion!.data['classification'],
+                  }),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () =>
+                  _applyImageSuggestion(_analysisSnapshot(), explicit: true),
+              child: const Text('Use suggestions in this form'),
+            ),
+          ],
+          TextFormField(
+            controller: _specificationsController,
+            maxLines: 3,
+            decoration: const InputDecoration(
+              labelText: 'Visible attributes / model (JSON, editable)',
+              hintText: '{"colour":"blue"}',
+            ),
+            onChanged: (_) {
+              if (_analysisApplied) setState(() => _analysisReviewed = false);
+            },
+          ),
+          if (_analysisApplied)
+            CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                'I checked the suggested details and selected the correct category',
+              ),
+              value: _analysisReviewed,
+              onChanged: (value) =>
+                  setState(() => _analysisReviewed = value ?? false),
+            ),
+        ],
+      ),
+    ),
+  );
+
   Future<void> _pickImages({bool isMain = true}) async {
     final ImagePicker picker = ImagePicker();
 
@@ -2147,11 +2154,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     if (isMain) {
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      final File? image;
+      if (widget.pickMainImage != null) {
+        image = await widget.pickMainImage!();
+      } else {
+        final picked = await picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        image = picked == null ? null : File(picked.path);
+      }
+      if (!mounted) return;
       if (image != null) {
         setState(() {
-          _mainImage = File(image.path);
+          _analysisSequence++;
+          _analysisBusy = false;
+          _imageSuggestion = null;
+          _analysisStatus = '';
+          _mainImage = image;
         });
+        if (_autoAnalyze) await _analyzeMainPhoto(image);
       } else {
         setState(() {
           _errorMessage = 'Main image selection cancelled.';
@@ -2192,6 +2214,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _addProduct() async {
+    if (_analysisBusy || (_analysisApplied && !_analysisReviewed)) {
+      setState(
+        () => _errorMessage =
+            'Wait for image analysis and review the suggested details before saving.',
+      );
+      return;
+    }
+    if (_specificationsController.text.trim().isNotEmpty) {
+      try {
+        if (jsonDecode(_specificationsController.text) is! Map) {
+          throw const FormatException();
+        }
+      } catch (_) {
+        setState(
+          () => _errorMessage = 'Visible attributes must be a JSON object.',
+        );
+        return;
+      }
+    }
     if (!_videoReady) {
       setState(
         () => _errorMessage =
@@ -2291,11 +2332,33 @@ class _AddProductScreenState extends State<AddProductScreen> {
     request.fields['name'] = name;
     request.fields['description'] = description;
     request.fields['price'] = price.toString();
-    request.fields['category'] = _selectedCategory!;
+    final initial = widget.initialProduct;
+    final unchanged =
+        initial != null && _selectedCategory == _initialCategorySelection;
+    request.fields['category'] = unchanged
+        ? initial.category
+        : _selectedCategory!;
+    request.fields['subcategory'] = unchanged
+        ? initial.subcategory
+        : _selectedCategory!.split(' > ').skip(1).join(' > ');
+    // Let the backend reconcile unchanged legacy references without sending
+    // newly derived IDs that could erase contradictory restrictive evidence.
+    if (!unchanged) {
+      request.fields.addAll(
+        _catalogHierarchy?.referencesFor(
+              request.fields['category']!,
+              request.fields['subcategory']!,
+            ) ??
+            {},
+      );
+    }
     request.fields['stockQuantity'] = stockQuantity.toString();
     request.fields['is_flashsale'] = _isFlashSale.toString();
     if (_videoAssetId != null) request.fields['videoAssetId'] = _videoAssetId!;
     request.fields.addAll(_searchDetails);
+    if (_specificationsController.text.trim().isNotEmpty) {
+      request.fields['specifications'] = _specificationsController.text.trim();
+    }
 
     final productLocationAddress = _productLocationAddressController.text
         .trim();
@@ -2530,6 +2593,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               ),
                               const SizedBox(height: 8),
                               GestureDetector(
+                                key: const Key('selectMainProductImage'),
                                 onTap: () => _pickImages(isMain: true),
                                 child: Container(
                                   height: 200,
@@ -2674,16 +2738,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                     setState(() => _videoReady = ready),
                               ),
                               ProductSearchAttributesField(
-                                initialValues:
-                                    widget.initialProduct?.searchDetails ??
-                                    const {},
-                                onChanged: (field, value) =>
-                                    _searchDetails[field] = value,
+                                key: ValueKey(_attributeRevision),
+                                initialValues: _searchDetails,
+                                onChanged: (field, value) {
+                                  _searchDetails[field] = value;
+                                  if (_analysisApplied) {
+                                    setState(() => _analysisReviewed = false);
+                                  }
+                                },
                               ),
+                              _buildImageAnalysis(),
 
                               // Product Name
                               TextFormField(
                                 controller: _nameController,
+                                onChanged: (_) {
+                                  if (_analysisApplied) {
+                                    setState(() => _analysisReviewed = false);
+                                  }
+                                },
                                 style: TextStyle(color: color.primary),
                                 decoration: _inputDecoration(
                                   'Product Name',
@@ -2701,6 +2774,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               // Description
                               TextFormField(
                                 controller: _descriptionController,
+                                onChanged: (_) {
+                                  if (_analysisApplied) {
+                                    setState(() => _analysisReviewed = false);
+                                  }
+                                },
                                 maxLines: 3,
                                 style: TextStyle(color: color.primary),
                                 decoration: _inputDecoration(
@@ -2757,6 +2835,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                   if (newValue != null) {
                                     setState(() {
                                       _selectedCategory = newValue;
+                                      if (_analysisApplied) {
+                                        _analysisReviewed = false;
+                                      }
                                       if (_isMedicineCategory(newValue) &&
                                           !_isApprovedPharmacist) {
                                         _errorMessage =
