@@ -1,123 +1,21 @@
+import '../theme/app_colors.dart';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 class VendorUi {
-  static const Color deepNavyBlue = Color(0xFF03024C);
-  static const Color greenYellow = Color(0xFFB7FFD4);
+  static const Color deepNavyBlue = AppColors.royalBlue;
+  static const Color greenYellow = AppColors.lightBlue;
   static const Color whiteBackground = Colors.white;
-  static const Color blue = Color(0xFF0D2E91);
-  static const Color surface = Color(0xFFF4F7FB);
-  static const Color border = Color(0xFFD8E1F0);
+  static const Color blue = AppColors.royalBlue;
+  static const Color surface = AppColors.background;
+  static const Color border = AppColors.border;
   static const Color softText = Color(0xFFD9E4F6);
-  static const Color textMuted = Color(0xFF5B6886);
-  static const Color success = Color(0xFF1E9E67);
+  static const Color textMuted = AppColors.mutedText;
+  static const Color success = AppColors.green;
   static const Color warning = Color(0xFFE0A325);
   static const Color danger = Color(0xFFC64848);
 
-  static final ThemeData theme = ThemeData(
-    useMaterial3: true,
-    scaffoldBackgroundColor: surface,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: deepNavyBlue,
-      brightness: Brightness.light,
-      primary: deepNavyBlue,
-      secondary: greenYellow,
-      surface: whiteBackground,
-      error: danger,
-      onPrimary: whiteBackground,
-      onSecondary: deepNavyBlue,
-      onSurface: deepNavyBlue,
-    ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: deepNavyBlue,
-      foregroundColor: whiteBackground,
-      titleTextStyle: TextStyle(
-        color: whiteBackground,
-        fontSize: 20,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-    snackBarTheme: const SnackBarThemeData(
-      backgroundColor: deepNavyBlue,
-      contentTextStyle: TextStyle(color: whiteBackground),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: whiteBackground,
-      hintStyle: const TextStyle(color: textMuted),
-      labelStyle: const TextStyle(
-        color: textMuted,
-        fontWeight: FontWeight.w600,
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: deepNavyBlue, width: 1.3),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: danger),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: danger, width: 1.3),
-      ),
-    ),
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: deepNavyBlue,
-        foregroundColor: whiteBackground,
-        minimumSize: const Size(0, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-      ),
-    ),
-    outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: deepNavyBlue,
-        side: const BorderSide(color: border),
-        minimumSize: const Size(0, 52),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-      ),
-    ),
-    floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: deepNavyBlue,
-      foregroundColor: whiteBackground,
-    ),
-    chipTheme: ChipThemeData(
-      backgroundColor: deepNavyBlue.withValues(alpha: 0.06),
-      selectedColor: greenYellow,
-      disabledColor: border,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      side: const BorderSide(color: border),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-      labelStyle: const TextStyle(
-        color: textMuted,
-        fontWeight: FontWeight.w600,
-      ),
-      secondaryLabelStyle: const TextStyle(
-        color: deepNavyBlue,
-        fontWeight: FontWeight.w700,
-      ),
-    ),
-    checkboxTheme: CheckboxThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return deepNavyBlue;
-        }
-        return whiteBackground;
-      }),
-      checkColor: WidgetStateProperty.all(whiteBackground),
-      side: const BorderSide(color: border),
-    ),
-    dividerTheme: const DividerThemeData(color: border, thickness: 1),
-  );
+  static final ThemeData theme = AppTheme.lightTheme;
 
   static BoxDecoration panelDecoration({
     Color color = whiteBackground,

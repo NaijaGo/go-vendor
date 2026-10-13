@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -29,9 +30,9 @@ import 'home_screen.dart';
 import 'vendor_screen.dart';
 
 class AppUi {
-  static const Color primaryNavy = Color(0xFF102B5C);
-  static const Color deepNavy = Color(0xFF081A3A);
-  static const Color accentBlue = Color(0xFF3B82F6);
+  static const Color primaryNavy = AppColors.royalBlue;
+  static const Color deepNavy = AppColors.darkRoyalBlue;
+  static const Color accentBlue = AppColors.royalBlue;
   static const Color accentGreen = Color(0xFF16A34A);
   static const Color dangerRed = Color(0xFFEF4444);
 

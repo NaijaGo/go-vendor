@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 // lib/screens/Vendor/my_products_screen.dart
 
 import 'package:flutter/material.dart';
@@ -265,7 +266,7 @@ class _MyProductsScreenState extends State<MyProductsScreen> {
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: product.stockQuantity > 0
-                                        ? Colors.green.shade700
+                                        ? AppColors.successText
                                         : Colors.red,
                                   ),
                                 ),

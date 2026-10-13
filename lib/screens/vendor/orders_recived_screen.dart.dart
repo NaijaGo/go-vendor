@@ -124,6 +124,8 @@ class VendorOrderItem {
   final int quantity;
   final double unitPrice;
   final String customerNote;
+  final String? selectedColor;
+  final String? selectedSize;
 
   const VendorOrderItem({
     required this.productId,
@@ -132,13 +134,18 @@ class VendorOrderItem {
     required this.quantity,
     required this.unitPrice,
     this.customerNote = '',
+    this.selectedColor,
+    this.selectedSize,
   });
 
   factory VendorOrderItem.fromJson(Map<String, dynamic> json) {
-    final product = json['product'] ?? {};
+    final product = json['product'] is Map
+        ? json['product'] as Map
+        : <String, dynamic>{};
+    final size = json['selectedSize'];
     return VendorOrderItem(
       productId: (product['_id'] ?? product['id'] ?? '').toString(),
-      productName: (product['name'] ?? 'Product').toString(),
+      productName: (json['name'] ?? product['name'] ?? 'Product').toString(),
       productImageUrl:
           (product['imageUrls'] is List && product['imageUrls'].isNotEmpty)
           ? product['imageUrls'][0] as String
@@ -146,6 +153,13 @@ class VendorOrderItem {
       quantity: int.tryParse('${json['quantity'] ?? 1}') ?? 1,
       unitPrice: double.tryParse('${json['price'] ?? 0}') ?? 0,
       customerNote: (json['customerNote'] ?? '').toString(),
+      selectedColor: json['selectedColor']?.toString(),
+      selectedSize: size is Map
+          ? (size['label'] ??
+                    size['value'] ??
+                    '${size['length']} x ${size['width']} x ${size['height']} ${size['unit']}')
+                .toString()
+          : size?.toString(),
     );
   }
 }
@@ -1244,8 +1258,12 @@ class _OrderItemRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                item.productName,
-                maxLines: 1,
+                [
+                  item.productName,
+                  if (item.selectedColor != null) item.selectedColor!,
+                  if (item.selectedSize != null) item.selectedSize!,
+                ].join(' · '),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: VendorUi.deepNavyBlue,

@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
@@ -2057,7 +2058,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   height: 58,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    color: const Color(0xFFF4F7FB),
+                    color: AppColors.background,
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(16),
@@ -3236,6 +3237,17 @@ class ProductCard extends StatelessWidget {
                                 ? null
                                 : product.stockQuantity > 0
                                 ? () {
+                                    if (product.hasSelectableOptions) {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => ProductDetailScreen(
+                                            product: product,
+                                            heroTag: 'options-${product.id}',
+                                          ),
+                                        ),
+                                      );
+                                      return;
+                                    }
                                     cartProvider.addProduct(product);
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(

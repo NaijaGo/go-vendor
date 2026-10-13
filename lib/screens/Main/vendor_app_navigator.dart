@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -38,7 +39,7 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
   late List<dynamic> _notifications;
   final SocketService _socketService = SocketService();
 
-  static const Color _primaryNavy = Color(0xFF102B5C);
+  static const Color _primaryNavy = AppColors.royalBlue;
   static const Color _surface = Color(0xFFF5F7FB);
   static const Color _text = Color(0xFF111827);
   static const Color _muted = Color(0xFF6B7280);
@@ -59,8 +60,15 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
       if (!mounted || !_isApprovedVendor) return;
       final destination = ExploreNotificationIntent.take();
       if (destination == null) return;
-      Navigator.of(context).push(MaterialPageRoute(builder: (_) => ExploreCommentsScreen(
-        type: destination.type, itemId: destination.id, parentId: destination.parentId)));
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ExploreCommentsScreen(
+            type: destination.type,
+            itemId: destination.id,
+            parentId: destination.parentId,
+          ),
+        ),
+      );
     });
   }
 
@@ -113,7 +121,9 @@ class _VendorAppNavigatorState extends State<VendorAppNavigator> {
       dashboard,
       _isApprovedVendor ? const VendorMyProductsScreen() : dashboard,
       _isApprovedVendor ? const OrdersRecivedScreen() : dashboard,
-      _isApprovedVendor ? const ExplorePublishScreen(showAppBar: false) : dashboard,
+      _isApprovedVendor
+          ? const ExplorePublishScreen(showAppBar: false)
+          : dashboard,
       AccountScreen(onLogout: widget.onLogout),
     ];
   }

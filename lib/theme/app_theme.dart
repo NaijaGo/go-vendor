@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
+import 'app_colors.dart';
 
 import 'app_tokens.dart';
 
 class AppTheme {
   // Brand colors
-  static const Color primaryNavy = Color(0xFF102B5C);
-  static const Color deepNavy = Color(0xFF081A3A);
-  static const Color accentBlue = Color(0xFF3B82F6);
-  static const Color accentGreen = Color(0xFF16A34A);
+  static const Color primaryNavy = AppColors.royalBlue;
+  static const Color deepNavy = AppColors.darkRoyalBlue;
+  static const Color accentBlue = AppColors.royalBlue;
+  static const Color accentGreen = AppColors.green;
   static const Color dangerRed = Color(0xFFEF4444);
 
   // Neutral colors
-  static const Color secondaryBlack = Color(0xFF111827);
-  static const Color softGrey = Color(0xFFF5F7FB);
+  static const Color secondaryBlack = AppColors.text;
+  static const Color softGrey = AppColors.background;
   static const Color cardWhite = Colors.white;
-  static const Color borderGrey = Color(0xFFE5E7EB);
-  static const Color mutedText = Color(0xFF6B7280);
+  static const Color borderGrey = AppColors.border;
+  static const Color mutedText = AppColors.mutedText;
 
   static ThemeData get lightTheme {
     final base = ThemeData.light(useMaterial3: true);
@@ -37,8 +38,42 @@ class AppTheme {
         onError: Colors.white,
         surface: cardWhite,
         onSurface: secondaryBlack,
+        onSurfaceVariant: AppColors.mutedText,
+        outline: AppColors.border,
+        primaryContainer: AppColors.lightBlue,
+        onPrimaryContainer: AppColors.darkRoyalBlue,
+        surfaceContainerHighest: AppColors.lightBlue,
       ),
 
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.royalBlue,
+          foregroundColor: AppColors.white,
+        ),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.white,
+        indicatorColor: AppColors.lightBlue,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? AppColors.royalBlue
+                : AppColors.mutedText,
+          ),
+        ),
+      ),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: AppColors.royalBlue,
+        unselectedLabelColor: AppColors.mutedText,
+        indicatorColor: AppColors.royalBlue,
+      ),
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? AppColors.royalBlue
+              : null,
+        ),
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         foregroundColor: secondaryBlack,
@@ -101,7 +136,7 @@ class AppTheme {
           elevation: 0,
           backgroundColor: primaryNavy,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFE5E7EB),
+          disabledBackgroundColor: AppColors.border,
           disabledForegroundColor: const Color(0xFF9CA3AF),
           minimumSize: const Size.fromHeight(52),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -164,8 +199,8 @@ class AppTheme {
 
       chipTheme: ChipThemeData(
         backgroundColor: const Color(0xFFF3F6FA),
-        disabledColor: const Color(0xFFE5E7EB),
-        selectedColor: primaryNavy,
+        disabledColor: AppColors.border,
+        selectedColor: AppColors.lightBlue,
         secondarySelectedColor: primaryNavy,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         labelStyle: const TextStyle(
@@ -195,6 +230,18 @@ class AppTheme {
       checkboxTheme: CheckboxThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
         side: const BorderSide(color: borderGrey),
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primaryNavy,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: cardWhite,
+        selectedItemColor: primaryNavy,
+        unselectedItemColor: mutedText,
+        elevation: 0,
       ),
 
       bottomSheetTheme: const BottomSheetThemeData(

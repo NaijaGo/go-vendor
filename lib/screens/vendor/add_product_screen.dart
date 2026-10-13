@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import '../../models/catalog_category.dart';
 import '../../services/catalog_category_service.dart';
 import '../../services/product_image_analysis_service.dart';
@@ -15,6 +16,7 @@ import '../../widgets/vendor_ui.dart';
 import '../../widgets/product_video_upload_field.dart';
 import '../../widgets/product_search_attributes_field.dart';
 import '../../models/product.dart';
+import '../../widgets/product_colors_field.dart';
 
 class AddProductScreen extends StatefulWidget {
   final Product? initialProduct;
@@ -34,6 +36,7 @@ class AddProductScreen extends StatefulWidget {
 
 class _AddProductScreenState extends State<AddProductScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _colorsController = TextEditingController();
   final _specificationsController = TextEditingController();
   bool _autoAnalyze = true,
       _analysisBusy = false,
@@ -108,6 +111,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _showSizeSection = false;
   bool _isSizeRequired = false;
   bool _showCustomSizeFields = false;
+  bool _clearSavedSizes = false;
 
   // NEW: For multiple custom sizes
   final List<Map<String, dynamic>> _customSizes = [];
@@ -165,6 +169,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   void _prefillProductForEditing() {
     final product = widget.initialProduct;
     if (product == null) return;
+    _colorsController.text = product.availableColors.join(', ');
     _searchDetails = Map<String, String>.from(product.searchDetails);
     _nameController.text = product.name;
     _descriptionController.text = product.description;
@@ -187,9 +192,32 @@ class _AddProductScreenState extends State<AddProductScreen> {
     _requiresPharmacistApproval = product.requiresPharmacistApproval;
     _isOverTheCounter = product.isOverTheCounter;
     _selectedSizeType = product.sizeData?['type']?.toString();
-    _selectedSizes = product.availableSizes.toSet();
-    _showSizeSection = _selectedSizeType != null;
-    _isSizeRequired = _showSizeSection;
+    _selectedSizes = product.isCustomDimensions
+        ? <String>{}
+        : product.availableSizes.toSet();
+    _showCustomSizeFields = product.isCustomDimensions;
+    if (product.isCustomDimensions) {
+      _customSizes.clear();
+      for (final size in product.sizeData?['customDimensions'] as List? ?? []) {
+        if (size is Map) {
+          _customSizes.add({
+            'length': '${size['length'] ?? ''}',
+            'width': '${size['width'] ?? ''}',
+            'height': '${size['height'] ?? ''}',
+            'unit': size['unit'] ?? 'cm',
+            'label': size['label'] ?? '',
+          });
+        }
+      }
+    }
+    _showSizeSection = true;
+    _isSizeRequired =
+        product.hasSizes &&
+        _sizeRequiredCategories.contains(
+          product.subcategory.isEmpty
+              ? product.category.split('>').last.trim()
+              : product.subcategory,
+        );
     _orderStartTime = _parseTime(product.orderStartTime, _orderStartTime);
     _orderEndTime = _parseTime(product.orderEndTime, _orderEndTime);
   }
@@ -207,6 +235,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   @override
   void dispose() {
     _analysisSequence++;
+    _colorsController.dispose();
     _specificationsController.dispose();
     _nameController.dispose();
     _descriptionController.dispose();
@@ -344,7 +373,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final optionalSize = _sizeOptionalCategories.contains(subcategory);
 
     setState(() {
-      _showSizeSection = requiresSize || optionalSize;
+      _showSizeSection = true;
       _isSizeRequired = requiresSize;
       _selectedSizeType = null;
       _selectedSizes.clear();
@@ -473,6 +502,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
           const SizedBox(height: 10),
 
           // Help text
+          if (!_isSizeRequired)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                icon: const Icon(Icons.clear),
+                label: const Text('No size options'),
+                onPressed: () => setState(() {
+                  _selectedSizeType = null;
+                  _selectedSizes.clear();
+                  _showCustomSizeFields = false;
+                  _clearSavedSizes = true;
+                }),
+              ),
+            ),
           Padding(
             padding: const EdgeInsets.only(bottom: 15.0),
             child: Text(
@@ -2352,6 +2395,14 @@ class _AddProductScreenState extends State<AddProductScreen> {
             {},
       );
     }
+    request.fields['availableColors'] = jsonEncode(
+      _colorsController.text
+          .split(',')
+          .map((color) => color.trim())
+          .where((color) => color.isNotEmpty)
+          .toSet()
+          .toList(),
+    );
     request.fields['stockQuantity'] = stockQuantity.toString();
     request.fields['is_flashsale'] = _isFlashSale.toString();
     if (_videoAssetId != null) request.fields['videoAssetId'] = _videoAssetId!;
@@ -2400,6 +2451,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final sizeData = _getSizeData();
     if (sizeData != null) {
       request.fields['size_data'] = jsonEncode(sizeData);
+    } else if (_clearSavedSizes) {
+      request.fields['size_data'] = jsonEncode({'type': null, 'sizes': []});
     }
 
     // 1. Add Main Image
@@ -2455,7 +2508,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     '✅ Product with ${_selectedSizes.length} sizes added!',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  backgroundColor: Colors.green,
+                  backgroundColor: AppColors.green,
                   duration: const Duration(seconds: 3),
                 ),
               );
@@ -2864,6 +2917,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                               const SizedBox(height: 15),
 
                               // NEW: Size Selection Section (Conditional) - NOW MULTIPLE SELECTION
+                              ProductColorsField(controller: _colorsController),
                               _buildSizeSelection(),
 
                               _buildRestaurantOrderingSection(),

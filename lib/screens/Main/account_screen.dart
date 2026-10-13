@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -28,7 +29,7 @@ import '../../widgets/pharmacy_ui.dart';
 import '../../widgets/tech_glow_background.dart';
 
 // Define your color constants (consistent with vendor registration)
-const Color deepNavyBlue = Color(0xFF03024C);
+const Color deepNavyBlue = AppColors.royalBlue;
 const Color greenYellow = Color(0xFFADFF2F);
 const Color white = Colors.white;
 const Color lightGray = Color(

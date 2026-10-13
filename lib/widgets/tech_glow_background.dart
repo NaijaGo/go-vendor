@@ -1,3 +1,4 @@
+import '../theme/app_colors.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
@@ -20,13 +21,7 @@ class TechGlowBackground extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF020133),
-            Color(0xFF03024C),
-            Color(0xFF08237F),
-            Color(0xFF010124),
-          ],
-          stops: [0.0, 0.38, 0.74, 1.0],
+          colors: [AppColors.royalBlue, AppColors.darkRoyalBlue],
         ),
       ),
       child: Stack(
@@ -60,7 +55,7 @@ class TechGlowBackground extends StatelessWidget {
             left: -120,
             child: _GlowOrb(
               size: 420,
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.20),
+              color: AppColors.royalBlue.withValues(alpha: 0.20),
             ),
           ),
           Positioned(
@@ -78,7 +73,7 @@ class TechGlowBackground extends StatelessWidget {
               width: 390,
               height: 150,
               rotation: -0.22,
-              glowColor: const Color(0xFF3B82F6).withValues(alpha: 0.16),
+              glowColor: AppColors.royalBlue.withValues(alpha: 0.16),
               highlightColor: const Color(0xFF61F3AE).withValues(alpha: 0.12),
             ),
           ),
@@ -90,7 +85,7 @@ class TechGlowBackground extends StatelessWidget {
               height: 128,
               rotation: -0.50,
               glowColor: const Color(0xFF61F3AE).withValues(alpha: 0.18),
-              highlightColor: const Color(0xFF3B82F6).withValues(alpha: 0.10),
+              highlightColor: AppColors.royalBlue.withValues(alpha: 0.10),
             ),
           ),
           Positioned(
@@ -100,7 +95,7 @@ class TechGlowBackground extends StatelessWidget {
               width: 320,
               height: 120,
               rotation: 0.26,
-              glowColor: const Color(0xFF3B82F6).withValues(alpha: 0.13),
+              glowColor: AppColors.royalBlue.withValues(alpha: 0.13),
               highlightColor: const Color(0xFF61F3AE).withValues(alpha: 0.10),
             ),
           ),
@@ -159,7 +154,7 @@ class _MarketplaceAtmosphere extends StatelessWidget {
                 radius: 1.02,
                 colors: [
                   const Color(0xFF61F3AE).withValues(alpha: 0.10),
-                  const Color(0xFF3B82F6).withValues(alpha: 0.08),
+                  AppColors.royalBlue.withValues(alpha: 0.08),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.34, 1.0],
@@ -174,7 +169,7 @@ class _MarketplaceAtmosphere extends StatelessWidget {
                 colors: [
                   const Color(0xFF61F3AE).withValues(alpha: 0.07),
                   Colors.transparent,
-                  const Color(0xFF3B82F6).withValues(alpha: 0.10),
+                  AppColors.royalBlue.withValues(alpha: 0.10),
                 ],
                 stops: const [0.0, 0.42, 1.0],
               ),

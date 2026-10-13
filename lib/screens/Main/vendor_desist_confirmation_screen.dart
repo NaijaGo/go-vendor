@@ -1,11 +1,12 @@
+import '../../theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
-const Color deepNavyBlue = Color(0xFF03024C);
+const Color deepNavyBlue = AppColors.royalBlue;
 const Color whiteBackground = Colors.white;
-const Color _vendorBlue = Color(0xFF0D2E91);
-const Color _vendorSurface = Color(0xFFF4F7FB);
-const Color _vendorBorder = Color(0xFFD8E1F0);
-const Color _vendorTextMuted = Color(0xFF5B6886);
+const Color _vendorBlue = AppColors.royalBlue;
+const Color _vendorSurface = AppColors.background;
+const Color _vendorBorder = AppColors.border;
+const Color _vendorTextMuted = AppColors.mutedText;
 const Color _vendorDanger = Color(0xFFC64848);
 const Color _vendorDangerSoft = Color(0xFFFCEAEA);
 

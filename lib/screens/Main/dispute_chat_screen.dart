@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 // lib/screens/disputes/dispute_chat_screen.dart
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -10,7 +11,7 @@ import '../../widgets/tech_glow_background.dart';
 const Color deepNavyBlue = Color(0xFF000080);
 const Color greenYellow = Color(0xFFADFF2F);
 const Color whiteBackground = Colors.white;
-const Color whiteSmoke = Color(0xFFF5F5F5);
+const Color whiteSmoke = AppColors.background;
 
 class DisputeChatScreen extends StatefulWidget {
   final String disputeId;

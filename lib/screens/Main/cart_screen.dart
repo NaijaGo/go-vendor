@@ -417,11 +417,11 @@ class _CartScreenState extends State<CartScreen> {
                       ),
                     ),
                   ),
-                  if (cartItem.selectedSize != null &&
-                      cartItem.selectedSize!.isNotEmpty) ...[
+                  if (cartItem.selectedSize != null ||
+                      cartItem.selectedColor != null) ...[
                     const SizedBox(height: 8),
                     Text(
-                      'Size: ${cartItem.selectedSize}',
+                      'Options: ${cartItem.displayName}',
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: lightGrey,
@@ -447,6 +447,7 @@ class _CartScreenState extends State<CartScreen> {
                           cartProvider.removeSingleItem(
                             cartItem.product.id,
                             selectedSize: cartItem.selectedSize,
+                            selectedColor: cartItem.selectedColor,
                           );
                         },
                       ),
@@ -477,6 +478,7 @@ class _CartScreenState extends State<CartScreen> {
                             cartProvider.addProduct(
                               cartItem.product,
                               selectedSize: cartItem.selectedSize,
+                              selectedColor: cartItem.selectedColor,
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -498,6 +500,7 @@ class _CartScreenState extends State<CartScreen> {
                           cartProvider.removeItem(
                             cartItem.product.id,
                             selectedSize: cartItem.selectedSize,
+                            selectedColor: cartItem.selectedColor,
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
@@ -1100,7 +1103,7 @@ class _RecentlyViewedProductCard extends StatelessWidget {
                           color: lightGrey,
                         ),
                       ),
-                      if (product.hasSizes) ...[
+                      if (product.hasSelectableOptions) ...[
                         const SizedBox(height: 4),
                         Text(
                           '${product.sizeType} Available',
@@ -1118,6 +1121,17 @@ class _RecentlyViewedProductCard extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: product.stockQuantity > 0
                               ? () {
+                                  if (product.hasSelectableOptions) {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => ProductDetailScreen(
+                                          product: product,
+                                          heroTag: 'options-${product.id}',
+                                        ),
+                                      ),
+                                    );
+                                    return;
+                                  }
                                   cartProvider.addProduct(product);
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(

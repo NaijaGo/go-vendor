@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -16,9 +17,9 @@ import '../../services/location_access_service.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_tokens.dart';
 
-const Color _vendorNavy = Color(0xFF03024C);
-const Color _vendorBlue = Color(0xFF0D2E91);
-const Color _vendorMint = Color(0xFFB7FFD4);
+const Color _vendorNavy = AppColors.royalBlue;
+const Color _vendorBlue = AppColors.royalBlue;
+const Color _vendorMint = AppColors.lightBlue;
 const Color _vendorSoftText = Color(0xFFD9E4F6);
 
 class VendorRegistrationScreen extends StatefulWidget {

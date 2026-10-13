@@ -258,6 +258,31 @@ void main() {
     },
   );
   testWidgets(
+    'legacy fashion edits retain optional missing sizes and saved colours',
+    (tester) async {
+      final service = FixtureAnalysis(
+        () async => ProductImageSuggestion(result()),
+      );
+      final product = Product(
+        id: 'fixture',
+        name: 'Legacy shoes',
+        description: 'Unchanged details',
+        price: 200,
+        category: 'Fashion > Footwear',
+        stockQuantity: 5,
+        vendorId: 'vendor',
+        availableColors: const ['Black'],
+      );
+      await mount(tester, service, product: product);
+      expect(text(tester, 'Available colours (optional)'), 'Black');
+      expect(find.text('Available Sizes (Optional)'), findsOneWidget);
+      expect(text(tester, 'Price'), '200.00');
+      expect(service.calls, 0);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+  testWidgets(
     'new-product image autofills visible details but not price or stock',
     (tester) async {
       final service = FixtureAnalysis(

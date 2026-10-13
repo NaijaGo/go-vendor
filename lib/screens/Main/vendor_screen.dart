@@ -1,3 +1,4 @@
+import '../../theme/app_colors.dart';
 // lib/screens/Main/VendorScreen.dart
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -14,15 +15,15 @@ import 'vendor_my_products_screen.dart';
 import '../vendor/vendor_deals_screen.dart';
 
 // Defined custom colors for consistency
-const Color deepNavyBlue = Color(0xFF03024C);
-const Color greenYellow = Color(0xFFB7FFD4);
+const Color deepNavyBlue = AppColors.royalBlue;
+const Color greenYellow = AppColors.lightBlue;
 const Color whiteBackground = Colors.white;
-const Color _vendorBlue = Color(0xFF0D2E91);
-const Color _vendorSurface = Color(0xFFF4F7FB);
-const Color _vendorBorder = Color(0xFFD8E1F0);
+const Color _vendorBlue = AppColors.royalBlue;
+const Color _vendorSurface = AppColors.background;
+const Color _vendorBorder = AppColors.border;
 const Color _vendorSoftText = Color(0xFFD9E4F6);
-const Color _vendorTextMuted = Color(0xFF5B6886);
-const Color _vendorSuccess = Color(0xFF1E9E67);
+const Color _vendorTextMuted = AppColors.mutedText;
+const Color _vendorSuccess = AppColors.green;
 const Color _vendorWarning = Color(0xFFE0A325);
 const Color _vendorDanger = Color(0xFFC64848);
 
@@ -322,7 +323,7 @@ class _VendorScreenState extends State<VendorScreen>
                 children: const [
                   LinearProgressIndicator(
                     minHeight: 10,
-                    backgroundColor: Color(0xFFD8E1F0),
+                    backgroundColor: AppColors.border,
                     valueColor: AlwaysStoppedAnimation<Color>(deepNavyBlue),
                   ),
                   SizedBox(height: 12),
