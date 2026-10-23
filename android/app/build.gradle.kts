@@ -17,7 +17,9 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.naijago.govendor"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned explicitly: Google Play requires API 36, and Codemagic's pinned
+    // Flutter version may default to an older SDK.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -33,7 +35,7 @@ android {
         applicationId = "com.naijago.govendor"
         // mobile_scanner 7.x (ML Kit barcode) needs at least API 23
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
