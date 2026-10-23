@@ -133,6 +133,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isFlashSale = false;
+  bool _photoCleanupConsent = false;
   bool _isApprovedPharmacist = false;
   bool _requiresPrescription = false;
   bool _requiresPharmacistApproval = false;
@@ -2405,6 +2406,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
     request.fields['stockQuantity'] = stockQuantity.toString();
     request.fields['is_flashsale'] = _isFlashSale.toString();
+    if (_photoCleanupConsent) request.fields['photoCleanupConsent'] = 'true';
     if (_videoAssetId != null) request.fields['videoAssetId'] = _videoAssetId!;
     request.fields.addAll(_searchDetails);
     if (_specificationsController.text.trim().isNotEmpty) {
@@ -2778,6 +2780,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
                                         ),
                                       ),
                                   ],
+                                ),
+                              ),
+                              Material(
+                                type: MaterialType.transparency,
+                                child: CheckboxListTile(
+                                  value: _photoCleanupConsent,
+                                  onChanged: (value) => setState(
+                                    () => _photoCleanupConsent = value ?? false,
+                                  ),
+                                  activeColor: VendorUi.deepNavyBlue,
+                                  title: const Text(
+                                    'Give my photos a clean white background',
+                                  ),
+                                  subtitle: const Text(
+                                    'NaijaGo may send these photos to an image-editing '
+                                    'service to remove the background. Your original is '
+                                    'kept, and NaijaGo reviews the result before customers see it.',
+                                  ),
+                                  contentPadding: EdgeInsets.zero,
                                 ),
                               ),
                               const SizedBox(height: 20),
